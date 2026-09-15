@@ -96,7 +96,7 @@ class DepartmentManagementScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Padding(
-        padding: EdgeInsets.all(Responsive.isMobile(context) ? AarogyaSpacing.md : AarogyaSpacing.xxl),
+        padding: EdgeInsets.all(Responsive.isMobile(context) ? 12 : AarogyaSpacing.xxl),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -119,17 +119,18 @@ class DepartmentManagementScreen extends ConsumerWidget {
                 AarogyaBadge(label: '${departments.length} Operational Units', variant: AarogyaBadgeVariant.cyan),
               ],
             ),
-            const SizedBox(height: AarogyaSpacing.xl),
+            const SizedBox(height: 8),
 
             Expanded(
               child: LayoutBuilder(builder: (context, constraints) {
                 final crossCount = constraints.maxWidth > 850 ? 2 : 1;
                 return GridView.builder(
+                  padding: EdgeInsets.zero,
                   itemCount: departments.length,
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: crossCount,
-                    crossAxisSpacing: AarogyaSpacing.md,
-                    mainAxisSpacing: AarogyaSpacing.md,
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
                     mainAxisExtent: 180,
                   ),
                   itemBuilder: (context, index) {

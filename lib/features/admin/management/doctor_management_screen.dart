@@ -116,7 +116,7 @@ class _DoctorManagementScreenState extends ConsumerState<DoctorManagementScreen>
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Padding(
-        padding: EdgeInsets.all(Responsive.isMobile(context) ? AarogyaSpacing.md : AarogyaSpacing.xxl),
+        padding: EdgeInsets.all(Responsive.isMobile(context) ? 12 : AarogyaSpacing.xxl),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -143,7 +143,7 @@ class _DoctorManagementScreenState extends ConsumerState<DoctorManagementScreen>
                 ),
               ],
             ),
-            const SizedBox(height: AarogyaSpacing.lg),
+            const SizedBox(height: 8),
 
             // Search Bar
             AarogyaTextField(
@@ -153,13 +153,14 @@ class _DoctorManagementScreenState extends ConsumerState<DoctorManagementScreen>
               showClearButton: true,
               onChanged: (val) => setState(() => _query = val),
             ),
-            const SizedBox(height: AarogyaSpacing.lg),
+            const SizedBox(height: 8),
 
             // Doctor List
             Expanded(
               child: ListView.separated(
+                padding: EdgeInsets.zero,
                 itemCount: filtered.length,
-                separatorBuilder: (_, __) => const SizedBox(height: AarogyaSpacing.md),
+                separatorBuilder: (_, __) => const SizedBox(height: 8),
                 itemBuilder: (context, index) {
                   final doc = filtered[index];
                   return GlassCard(

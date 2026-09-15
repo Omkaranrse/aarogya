@@ -27,7 +27,7 @@ class PrescriptionsHubScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Padding(
-        padding: EdgeInsets.all(Responsive.isMobile(context) ? AarogyaSpacing.md : AarogyaSpacing.xxl),
+        padding: EdgeInsets.all(Responsive.isMobile(context) ? 12 : AarogyaSpacing.xxl),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -53,7 +53,7 @@ class PrescriptionsHubScreen extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: AarogyaSpacing.xl),
+            const SizedBox(height: 8),
 
             Expanded(
               child: prescriptions.isEmpty
@@ -63,8 +63,9 @@ class PrescriptionsHubScreen extends ConsumerWidget {
                       description: 'Your signed prescriptions will appear here immediately after consultations.',
                     )
                   : ListView.separated(
+                      padding: EdgeInsets.zero,
                       itemCount: prescriptions.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: AarogyaSpacing.lg),
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
                       itemBuilder: (context, index) {
                         final rx = prescriptions[index];
                         return _buildPrescriptionSlip(context, rx, isDark, primaryText, secondaryText);
@@ -86,7 +87,9 @@ class PrescriptionsHubScreen extends ConsumerWidget {
   ) {
     return GlassCard(
       glowColor: AarogyaColors.accentPurple,
-      padding: AarogyaSpacing.paddingXl,
+      padding: Responsive.isMobile(context)
+          ? const EdgeInsets.symmetric(horizontal: 14, vertical: 12)
+          : AarogyaSpacing.paddingXl,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -103,9 +106,9 @@ class PrescriptionsHubScreen extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: AarogyaColors.accentPurple.withOpacity(0.15),
+                      color: AarogyaColors.accentPurple.withValues(alpha: 0.15),
                       borderRadius: AarogyaRadius.radiusSm,
-                      border: Border.all(color: AarogyaColors.accentPurple.withOpacity(0.3)),
+                      border: Border.all(color: AarogyaColors.accentPurple.withValues(alpha: 0.3)),
                     ),
                     child: Text(
                       '℞ PRESCRIPTION',
@@ -128,7 +131,7 @@ class PrescriptionsHubScreen extends ConsumerWidget {
               ),
             ],
           ),
-          const Divider(height: 24),
+          const Divider(height: 20),
 
           // Doctor & Patient Info
           Row(
@@ -158,48 +161,68 @@ class PrescriptionsHubScreen extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: AarogyaSpacing.lg),
+          const SizedBox(height: 12),
 
           // Medications Table
           Text('Prescribed Medications', style: AarogyaTypography.label(primaryText)),
           const SizedBox(height: AarogyaSpacing.sm),
           Container(
             decoration: BoxDecoration(
-              color: (isDark ? AarogyaColors.darkSurface : AarogyaColors.lightBg).withOpacity(0.5),
+              color: (isDark ? AarogyaColors.darkSurface : AarogyaColors.lightBg).withValues(alpha: 0.5),
               borderRadius: AarogyaRadius.radiusMd,
               border: Border.all(
                 color: isDark ? AarogyaColors.darkGlassBorderSubtle : AarogyaColors.lightGlassBorderSubtle,
               ),
             ),
             child: Column(
-              children: rx.medications.map((med) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  child: Row(
+              children: rx.medications.asMap().entries.map((entry) {
+                final idx = entry.key;
+                final med = entry.value;
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    border: idx < rx.medications.length - 1
+                        ? Border(
+                            bottom: BorderSide(
+                              color: isDark
+                                  ? AarogyaColors.darkGlassBorderSubtle
+                                  : AarogyaColors.lightGlassBorderSubtle,
+                            ),
+                          )
+                        : null,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.circle, size: 8, color: AarogyaColors.accentPurple),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        flex: 3,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(med.name, style: AarogyaTypography.label(primaryText)),
-                            Text(med.instructions, style: AarogyaTypography.caption(secondaryText)),
-                          ],
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                const Icon(Icons.circle, size: 7, color: AarogyaColors.accentPurple),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    med.name,
+                                    style: AarogyaTypography.label(primaryText).copyWith(fontWeight: FontWeight.w700),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          AarogyaBadge(
+                            label: med.dosage,
+                            variant: AarogyaBadgeVariant.purple,
+                            showDot: false,
+                          ),
+                        ],
                       ),
-                      Expanded(
-                        flex: 2,
-                        child: Text(med.dosage, style: AarogyaTypography.caption(primaryText)),
-                      ),
-                      Expanded(
-                        flex: 3,
-                        child: Text(med.frequency, style: AarogyaTypography.caption(AarogyaColors.primaryCyan)),
-                      ),
-                      Expanded(
-                        flex: 2,
-                        child: Text(med.duration, style: AarogyaTypography.caption(secondaryText)),
+                      const SizedBox(height: 3),
+                      Text(
+                        '${med.frequency} • ${med.duration} • ${med.instructions}',
+                        style: AarogyaTypography.caption(secondaryText),
                       ),
                     ],
                   ),

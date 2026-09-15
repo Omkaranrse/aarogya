@@ -38,7 +38,7 @@ class _MedicalRecordsScreenState extends ConsumerState<MedicalRecordsScreen> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Padding(
-        padding: EdgeInsets.all(Responsive.isMobile(context) ? AarogyaSpacing.md : AarogyaSpacing.xxl),
+        padding: EdgeInsets.all(Responsive.isMobile(context) ? 12 : AarogyaSpacing.xxl),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -64,7 +64,7 @@ class _MedicalRecordsScreenState extends ConsumerState<MedicalRecordsScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: AarogyaSpacing.lg),
+            const SizedBox(height: 8),
 
             // Filter Chips
             SingleChildScrollView(
@@ -83,7 +83,7 @@ class _MedicalRecordsScreenState extends ConsumerState<MedicalRecordsScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: AarogyaSpacing.lg),
+            const SizedBox(height: 8),
 
             // Timeline Feed
             Expanded(
@@ -94,6 +94,7 @@ class _MedicalRecordsScreenState extends ConsumerState<MedicalRecordsScreen> {
                       description: 'Records matching the selected filter will appear here in chronological order.',
                     )
                   : ListView.builder(
+                      padding: EdgeInsets.zero,
                       itemCount: filtered.length,
                       itemBuilder: (context, index) {
                         final record = filtered[index];
@@ -204,30 +205,38 @@ class _MedicalRecordsScreenState extends ConsumerState<MedicalRecordsScreen> {
               padding: const EdgeInsets.only(bottom: AarogyaSpacing.lg),
               child: GlassCard(
                 glowColor: accentColor,
-                padding: AarogyaSpacing.paddingLg,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Text(record.title, style: AarogyaTypography.title(primaryText)),
-                            const SizedBox(width: 8),
-                            AarogyaBadge(label: record.type.displayName, variant: AarogyaBadgeVariant.info),
-                          ],
+                        Expanded(
+                          child: Text(
+                            record.title,
+                            style: AarogyaTypography.title(primaryText).copyWith(fontWeight: FontWeight.w700),
+                          ),
                         ),
+                        const SizedBox(width: 8),
                         Text(
                           AarogyaFormatters.date(record.date),
                           style: AarogyaTypography.caption(secondaryText),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${record.doctorName} • Department of ${record.department}',
-                      style: AarogyaTypography.caption(AarogyaColors.primaryCyan),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: [
+                        AarogyaBadge(label: record.type.displayName, variant: AarogyaBadgeVariant.info),
+                        Text(
+                          '${record.doctorName} • Department of ${record.department}',
+                          style: AarogyaTypography.caption(AarogyaColors.primaryCyan),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 8),
                     Text(record.summary, style: AarogyaTypography.bodyMedium(secondaryText)),
@@ -240,7 +249,7 @@ class _MedicalRecordsScreenState extends ConsumerState<MedicalRecordsScreen> {
                           return Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
-                              color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.04),
+                              color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
                               borderRadius: AarogyaRadius.radiusSm,
                             ),
                             child: Text('#$tag', style: AarogyaTypography.caption(secondaryText)),

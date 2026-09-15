@@ -31,7 +31,7 @@ class PatientQueueScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Padding(
-        padding: EdgeInsets.all(Responsive.isMobile(context) ? AarogyaSpacing.md : AarogyaSpacing.xxl),
+        padding: EdgeInsets.all(Responsive.isMobile(context) ? 12 : AarogyaSpacing.xxl),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -44,9 +44,9 @@ class PatientQueueScreen extends ConsumerWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Live OPD Queue Manager', style: AarogyaTypography.headingLarge(primaryText)),
+                    Text('OPD Patient Queue', style: AarogyaTypography.headingLarge(primaryText)),
                     Text(
-                      'Real-time token sequence and patient triage status',
+                      'Live patient triage, priority tracking, and consultation calling',
                       style: AarogyaTypography.bodyMedium(secondaryText),
                     ),
                   ],
@@ -66,7 +66,7 @@ class PatientQueueScreen extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: AarogyaSpacing.lg),
+            const SizedBox(height: 8),
 
             // Queue stats HUD strip
             GlassCard(
@@ -96,7 +96,7 @@ class PatientQueueScreen extends ConsumerWidget {
                 ],
               ),
             ),
-            const SizedBox(height: AarogyaSpacing.lg),
+            const SizedBox(height: 8),
 
             // Queue List
             Expanded(
@@ -107,8 +107,9 @@ class PatientQueueScreen extends ConsumerWidget {
                       description: 'No patients checked into today’s OPD schedule.',
                     )
                   : ListView.separated(
+                      padding: EdgeInsets.zero,
                       itemCount: queue.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: AarogyaSpacing.md),
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
                       itemBuilder: (context, index) {
                         final entry = queue[index];
                         return _buildQueueCard(context, entry, repo, isDark, primaryText, secondaryText);

@@ -49,7 +49,7 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Padding(
-        padding: EdgeInsets.all(Responsive.isMobile(context) ? AarogyaSpacing.md : AarogyaSpacing.xxl),
+        padding: EdgeInsets.all(Responsive.isMobile(context) ? 12 : AarogyaSpacing.xxl),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -75,7 +75,7 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: AarogyaSpacing.lg),
+            const SizedBox(height: 8),
 
             // Financial KPIs
             Row(
@@ -89,7 +89,7 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
                     accentColor: AarogyaColors.warning,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
                 Expanded(
                   child: StatCard(
                     title: 'Total Settled',
@@ -102,7 +102,7 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: AarogyaSpacing.xl),
+            const SizedBox(height: 8),
 
             // Filter tabs
             Row(
@@ -122,7 +122,7 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: AarogyaSpacing.lg),
+            const SizedBox(height: 8),
 
             // Invoices List
             Expanded(
@@ -133,8 +133,9 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
                       description: 'No medical invoices currently match the selected payment status.',
                     )
                   : ListView.separated(
+                      padding: EdgeInsets.zero,
                       itemCount: filtered.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: AarogyaSpacing.md),
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
                       itemBuilder: (context, index) {
                         final invoice = filtered[index];
                         return _buildInvoiceCard(context, invoice, isDark, primaryText, secondaryText);

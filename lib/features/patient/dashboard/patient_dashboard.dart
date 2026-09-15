@@ -34,17 +34,17 @@ class PatientDashboard extends ConsumerWidget {
         );
 
     return SingleChildScrollView(
-      padding: EdgeInsets.all(Responsive.isMobile(context) ? AarogyaSpacing.md : AarogyaSpacing.xxl),
+      padding: EdgeInsets.all(Responsive.isMobile(context) ? 12 : AarogyaSpacing.xxl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Greeting & Status Banner
           _buildGreetingSection(patient, isDark, primaryText, secondaryText),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
 
           // Vitals Glance Row
           _buildVitalsGlance(patient, isDark),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
 
           // Next Upcoming Appointment Card
           if (upcomingAppointment != null) ...[
@@ -52,9 +52,9 @@ class PatientDashboard extends ConsumerWidget {
               'Upcoming Consultation',
               style: AarogyaTypography.headingMedium(primaryText),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             _buildUpcomingAppointmentCard(context, ref, upcomingAppointment, isDark, primaryText, secondaryText),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
           ],
 
           // Quick Actions Grid
@@ -62,16 +62,16 @@ class PatientDashboard extends ConsumerWidget {
             'Quick Clinical Actions',
             style: AarogyaTypography.headingMedium(primaryText),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           _buildQuickActions(context, ref, isDark, primaryText),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
 
           // Active Prescriptions Summary
           Text(
             'Active Medications',
             style: AarogyaTypography.headingMedium(primaryText),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           _buildActiveMedications(context, ref, prescriptions, isDark, primaryText, secondaryText),
         ],
       ),
@@ -154,6 +154,7 @@ class PatientDashboard extends ConsumerWidget {
     return LayoutBuilder(builder: (context, constraints) {
       final isWide = constraints.maxWidth > 700;
       return GridView.count(
+        padding: EdgeInsets.zero,
         crossAxisCount: isWide ? 4 : 2,
         crossAxisSpacing: 8,
         mainAxisSpacing: 8,
@@ -380,9 +381,10 @@ class PatientDashboard extends ConsumerWidget {
     return LayoutBuilder(builder: (context, constraints) {
       final isWide = constraints.maxWidth > 800;
       return GridView.count(
+        padding: EdgeInsets.zero,
         crossAxisCount: isWide ? 5 : (constraints.maxWidth > 500 ? 3 : 2),
-        crossAxisSpacing: AarogyaSpacing.md,
-        mainAxisSpacing: AarogyaSpacing.md,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         childAspectRatio: 1.3,
@@ -397,9 +399,9 @@ class PatientDashboard extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: a.$3.withOpacity(0.15),
+                    color: a.$3.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
-                    border: Border.all(color: a.$3.withOpacity(0.3)),
+                    border: Border.all(color: a.$3.withValues(alpha: 0.3)),
                   ),
                   child: Icon(a.$2, size: 22, color: a.$3),
                 ),

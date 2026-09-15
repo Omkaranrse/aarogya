@@ -52,7 +52,7 @@ class _PatientAppointmentsScreenState extends ConsumerState<PatientAppointmentsS
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Padding(
-        padding: EdgeInsets.all(Responsive.isMobile(context) ? AarogyaSpacing.md : AarogyaSpacing.xxl),
+        padding: EdgeInsets.all(Responsive.isMobile(context) ? 12 : AarogyaSpacing.xxl),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -78,7 +78,7 @@ class _PatientAppointmentsScreenState extends ConsumerState<PatientAppointmentsS
                 ),
               ],
             ),
-            const SizedBox(height: AarogyaSpacing.lg),
+            const SizedBox(height: 8),
 
             // Tab bar filter
             SingleChildScrollView(
@@ -107,7 +107,7 @@ class _PatientAppointmentsScreenState extends ConsumerState<PatientAppointmentsS
                 ],
               ),
             ),
-            const SizedBox(height: AarogyaSpacing.lg),
+            const SizedBox(height: 8),
 
             // Appointments List
             Expanded(
@@ -118,8 +118,9 @@ class _PatientAppointmentsScreenState extends ConsumerState<PatientAppointmentsS
                       description: 'You do not have any appointments matching the selected filter status.',
                     )
                   : ListView.separated(
+                      padding: EdgeInsets.zero,
                       itemCount: filtered.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: AarogyaSpacing.md),
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
                       itemBuilder: (context, index) {
                         final apt = filtered[index];
                         return _buildAppointmentCard(context, apt, repo, isDark, primaryText, secondaryText);

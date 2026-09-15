@@ -41,7 +41,7 @@ class DoctorDiscoveryScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Padding(
-        padding: EdgeInsets.all(Responsive.isMobile(context) ? AarogyaSpacing.md : AarogyaSpacing.xxl),
+        padding: EdgeInsets.all(Responsive.isMobile(context) ? 12 : AarogyaSpacing.xxl),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -68,7 +68,7 @@ class DoctorDiscoveryScreen extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: AarogyaSpacing.lg),
+            const SizedBox(height: 8),
 
             // Search Bar
             AarogyaTextField(
@@ -77,7 +77,7 @@ class DoctorDiscoveryScreen extends ConsumerWidget {
               showClearButton: true,
               onChanged: (val) => ref.read(doctorSearchQueryProvider.notifier).state = val,
             ),
-            const SizedBox(height: AarogyaSpacing.md),
+            const SizedBox(height: 8),
 
             // Specialty Filter Chips
             SingleChildScrollView(
@@ -92,8 +92,8 @@ class DoctorDiscoveryScreen extends ConsumerWidget {
                       selected: isSelected,
                       onSelected: (_) => ref.read(selectedSpecialtyFilterProvider.notifier).state = spec,
                       selectedColor: isDark
-                          ? AarogyaColors.primaryCyan.withOpacity(0.2)
-                          : AarogyaColors.primaryBlue.withOpacity(0.15),
+                          ? AarogyaColors.primaryCyan.withValues(alpha: 0.2)
+                          : AarogyaColors.primaryBlue.withValues(alpha: 0.15),
                       labelStyle: AarogyaTypography.caption(
                         isSelected
                             ? (isDark ? AarogyaColors.primaryCyan : AarogyaColors.primaryBlue)
@@ -112,7 +112,7 @@ class DoctorDiscoveryScreen extends ConsumerWidget {
                 }).toList(),
               ),
             ),
-            const SizedBox(height: AarogyaSpacing.lg),
+            const SizedBox(height: 8),
 
             // Doctors Grid / List
             Expanded(
@@ -133,11 +133,12 @@ class DoctorDiscoveryScreen extends ConsumerWidget {
                           : 1;
 
                       return GridView.builder(
+                        padding: EdgeInsets.zero,
                         itemCount: filteredDoctors.length,
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: crossCount,
-                          crossAxisSpacing: AarogyaSpacing.md,
-                          mainAxisSpacing: AarogyaSpacing.md,
+                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 8,
                           mainAxisExtent: 220,
                         ),
                         itemBuilder: (context, index) {

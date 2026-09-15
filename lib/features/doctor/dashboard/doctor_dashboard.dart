@@ -35,7 +35,7 @@ class DoctorDashboard extends ConsumerWidget {
     final completedCount = queue.where((q) => q.status == QueueStatus.completed).length;
 
     return SingleChildScrollView(
-      padding: EdgeInsets.all(Responsive.isMobile(context) ? AarogyaSpacing.md : AarogyaSpacing.xxl),
+      padding: EdgeInsets.all(Responsive.isMobile(context) ? 12 : AarogyaSpacing.xxl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -86,12 +86,13 @@ class DoctorDashboard extends ConsumerWidget {
               ],
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
 
           // Clinical KPIs
           LayoutBuilder(builder: (context, constraints) {
             final isWide = constraints.maxWidth > 750;
             return GridView.count(
+              padding: EdgeInsets.zero,
               crossAxisCount: isWide ? 4 : 2,
               crossAxisSpacing: 8,
               mainAxisSpacing: 8,
@@ -132,11 +133,11 @@ class DoctorDashboard extends ConsumerWidget {
               ],
             );
           }),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
 
           // Now Consulting Hero Banner
           Text('Active Clinical Session', style: AarogyaTypography.headingMedium(primaryText)),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           if (consultingPatient != null)
             GlassCard(
               glowColor: AarogyaColors.primaryCyan,

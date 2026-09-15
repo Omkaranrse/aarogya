@@ -27,7 +27,7 @@ class AdminDashboard extends ConsumerWidget {
     final activeDoctors = doctors.where((d) => d.isAvailableToday).length;
 
     return SingleChildScrollView(
-      padding: EdgeInsets.all(Responsive.isMobile(context) ? AarogyaSpacing.md : AarogyaSpacing.xxl),
+      padding: EdgeInsets.all(Responsive.isMobile(context) ? 12 : AarogyaSpacing.xxl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -54,18 +54,19 @@ class AdminDashboard extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: AarogyaSpacing.xl),
+          const SizedBox(height: 8),
 
           // Executive Metric Stats
           LayoutBuilder(builder: (context, constraints) {
             final isWide = constraints.maxWidth > 750;
             return GridView.count(
+              padding: EdgeInsets.zero,
               crossAxisCount: isWide ? 4 : 2,
-              crossAxisSpacing: AarogyaSpacing.md,
-              mainAxisSpacing: AarogyaSpacing.md,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              childAspectRatio: isWide ? 1.6 : 1.12,
+              childAspectRatio: isWide ? 1.6 : 1.45,
               children: [
                 StatCard(
                   title: 'Total Active Patients',
@@ -100,11 +101,11 @@ class AdminDashboard extends ConsumerWidget {
               ],
             );
           }),
-          const SizedBox(height: AarogyaSpacing.xxl),
+          const SizedBox(height: 10),
 
           // Operational Quick Jump Cards
           Text('Operational Suites', style: AarogyaTypography.headingMedium(primaryText)),
-          const SizedBox(height: AarogyaSpacing.md),
+          const SizedBox(height: 6),
           Row(
             children: [
               Expanded(

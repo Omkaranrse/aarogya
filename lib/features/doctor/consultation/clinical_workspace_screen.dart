@@ -262,7 +262,7 @@ class _ClinicalWorkspaceScreenState extends ConsumerState<ClinicalWorkspaceScree
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(Responsive.isMobile(context) ? AarogyaSpacing.md : AarogyaSpacing.xxl),
+        padding: EdgeInsets.all(Responsive.isMobile(context) ? 12 : AarogyaSpacing.xxl),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -296,14 +296,14 @@ class _ClinicalWorkspaceScreenState extends ConsumerState<ClinicalWorkspaceScree
                 ],
               ],
             ),
-            const SizedBox(height: AarogyaSpacing.md),
+            const SizedBox(height: 8),
 
             // Responsive Layout: Desktop 2-Column or Mobile Column
             Responsive(
               mobile: Column(
                 children: [
                   _buildPatientClinicalSummary(patient, isDark, primaryText, secondaryText),
-                  const SizedBox(height: AarogyaSpacing.md),
+                  const SizedBox(height: 8),
                   _buildConsultationForm(context, isDark, primaryText, secondaryText),
                 ],
               ),
@@ -324,7 +324,7 @@ class _ClinicalWorkspaceScreenState extends ConsumerState<ClinicalWorkspaceScree
                 ],
               ),
             ),
-            const SizedBox(height: AarogyaSpacing.md),
+            const SizedBox(height: 8),
 
             // Finalize CTA
             GlassCard(

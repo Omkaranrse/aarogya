@@ -11,6 +11,7 @@ enum AarogyaBadgeVariant {
   info,
   neutral,
   cyan,
+  purple,
 }
 
 class AarogyaBadge extends StatelessWidget {
@@ -44,6 +45,9 @@ class AarogyaBadge extends StatelessWidget {
       case AarogyaBadgeVariant.cyan:
         baseColor = AarogyaColors.primaryCyan;
         break;
+      case AarogyaBadgeVariant.purple:
+        baseColor = AarogyaColors.accentPurple;
+        break;
       case AarogyaBadgeVariant.neutral:
         baseColor = AarogyaColors.neutral;
         break;
@@ -58,10 +62,10 @@ class AarogyaBadge extends StatelessWidget {
         vertical: AarogyaSpacing.xs,
       ),
       decoration: BoxDecoration(
-        color: baseColor.withOpacity(0.12),
+        color: baseColor.withValues(alpha: 0.12),
         borderRadius: AarogyaRadius.radiusPill,
         border: Border.all(
-          color: baseColor.withOpacity(0.3),
+          color: baseColor.withValues(alpha: 0.3),
           width: 1.0,
         ),
       ),

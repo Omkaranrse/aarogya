@@ -27,7 +27,7 @@ class LaboratoryHubScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Padding(
-        padding: EdgeInsets.all(Responsive.isMobile(context) ? AarogyaSpacing.md : AarogyaSpacing.xxl),
+        padding: EdgeInsets.all(Responsive.isMobile(context) ? 12 : AarogyaSpacing.xxl),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -53,7 +53,7 @@ class LaboratoryHubScreen extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: AarogyaSpacing.xl),
+            const SizedBox(height: 8),
 
             Expanded(
               child: labReports.isEmpty
@@ -63,8 +63,9 @@ class LaboratoryHubScreen extends ConsumerWidget {
                       description: 'Ordered diagnostic tests will appear here once specimens are analyzed.',
                     )
                   : ListView.separated(
+                      padding: EdgeInsets.zero,
                       itemCount: labReports.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: AarogyaSpacing.lg),
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
                       itemBuilder: (context, index) {
                         final report = labReports[index];
                         return _buildReportCard(context, report, isDark, primaryText, secondaryText);
@@ -86,111 +87,141 @@ class LaboratoryHubScreen extends ConsumerWidget {
   ) {
     return GlassCard(
       glowColor: report.hasAbnormalResults ? AarogyaColors.critical : AarogyaColors.primaryCyan,
-      padding: AarogyaSpacing.paddingXl,
+      padding: Responsive.isMobile(context)
+          ? const EdgeInsets.symmetric(horizontal: 14, vertical: 12)
+          : AarogyaSpacing.paddingXl,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
+          // Header: Avatar + Title + Badges
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: (report.hasAbnormalResults ? AarogyaColors.critical : AarogyaColors.primaryCyan).withOpacity(0.15),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.science_rounded,
-                      color: report.hasAbnormalResults ? AarogyaColors.critical : AarogyaColors.primaryCyan,
-                      size: 22,
-                    ),
-                  ),
-                  const SizedBox(width: AarogyaSpacing.md),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(report.testName, style: AarogyaTypography.headingMedium(primaryText)),
-                      Text(
-                        'Category: ${report.category} • Ordered by ${report.orderedByDoctor}',
-                        style: AarogyaTypography.caption(secondaryText),
-                      ),
-                    ],
-                  ),
-                ],
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: (report.hasAbnormalResults ? AarogyaColors.critical : AarogyaColors.primaryCyan)
+                      .withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.science_rounded,
+                  color: report.hasAbnormalResults ? AarogyaColors.critical : AarogyaColors.primaryCyan,
+                  size: 20,
+                ),
               ),
-              Row(
-                children: [
-                  AarogyaBadge(
-                    label: report.status.displayName,
-                    variant: report.status == ReportStatus.completed
-                        ? AarogyaBadgeVariant.success
-                        : AarogyaBadgeVariant.warning,
-                  ),
-                  const SizedBox(width: 8),
-                  if (report.hasAbnormalResults)
-                    const AarogyaBadge(
-                      label: 'Action Required',
-                      variant: AarogyaBadgeVariant.critical,
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      report.testName,
+                      style: AarogyaTypography.headingMedium(primaryText),
                     ),
-                ],
+                    const SizedBox(height: 2),
+                    Text(
+                      'Category: ${report.category} • Ordered by ${report.orderedByDoctor}',
+                      style: AarogyaTypography.caption(secondaryText),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
-          const Divider(height: 24),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            children: [
+              AarogyaBadge(
+                label: report.status.displayName,
+                variant: report.status == ReportStatus.completed
+                    ? AarogyaBadgeVariant.success
+                    : AarogyaBadgeVariant.warning,
+              ),
+              if (report.hasAbnormalResults)
+                const AarogyaBadge(
+                  label: 'Action Required',
+                  variant: AarogyaBadgeVariant.critical,
+                ),
+            ],
+          ),
+          const Divider(height: 20),
 
           // Numeric Test Items with Reference Ranges
           Text('Laboratory Test Parameters & Reference Ranges', style: AarogyaTypography.label(primaryText)),
           const SizedBox(height: AarogyaSpacing.sm),
           Container(
             decoration: BoxDecoration(
-              color: (isDark ? AarogyaColors.darkSurface : AarogyaColors.lightBg).withOpacity(0.5),
+              color: (isDark ? AarogyaColors.darkSurface : AarogyaColors.lightBg).withValues(alpha: 0.5),
               borderRadius: AarogyaRadius.radiusMd,
               border: Border.all(
                 color: isDark ? AarogyaColors.darkGlassBorderSubtle : AarogyaColors.lightGlassBorderSubtle,
               ),
             ),
             child: Column(
-              children: report.items.map((item) {
+              children: report.items.asMap().entries.map((entry) {
+                final idx = entry.key;
+                final item = entry.value;
                 final isAbnormal = item.status != LabResultStatus.normal;
                 final statusColor = item.status == LabResultStatus.normal
                     ? AarogyaColors.success
                     : (item.status == LabResultStatus.critical ? AarogyaColors.critical : AarogyaColors.warning);
 
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: 4,
-                        child: Text(item.testName, style: AarogyaTypography.bodyMedium(primaryText)),
-                      ),
-                      Expanded(
-                        flex: 3,
-                        child: Row(
-                          children: [
-                            Text(
-                              '${item.value}',
-                              style: AarogyaTypography.title(statusColor).copyWith(fontWeight: FontWeight.w800),
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    border: idx < report.items.length - 1
+                        ? Border(
+                            bottom: BorderSide(
+                              color: isDark
+                                  ? AarogyaColors.darkGlassBorderSubtle
+                                  : AarogyaColors.lightGlassBorderSubtle,
                             ),
-                            const SizedBox(width: 4),
-                            Text(item.unit, style: AarogyaTypography.caption(secondaryText)),
-                          ],
-                        ),
+                          )
+                        : null,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              item.testName,
+                              style: AarogyaTypography.bodyMedium(primaryText).copyWith(fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          AarogyaBadge(
+                            label: item.status.label,
+                            variant: isAbnormal ? AarogyaBadgeVariant.critical : AarogyaBadgeVariant.success,
+                            showDot: isAbnormal,
+                          ),
+                        ],
                       ),
-                      Expanded(
-                        flex: 3,
-                        child: Text(
-                          'Ref: ${item.minRange} - ${item.maxRange} ${item.unit}',
-                          style: AarogyaTypography.caption(secondaryText),
-                        ),
-                      ),
-                      AarogyaBadge(
-                        label: item.status.label,
-                        variant: isAbnormal ? AarogyaBadgeVariant.critical : AarogyaBadgeVariant.success,
-                        showDot: isAbnormal,
+                      const SizedBox(height: 4),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                '${item.value}',
+                                style: AarogyaTypography.title(statusColor).copyWith(fontWeight: FontWeight.w800),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(item.unit, style: AarogyaTypography.caption(secondaryText)),
+                            ],
+                          ),
+                          Text(
+                            'Ref: ${item.minRange} - ${item.maxRange} ${item.unit}',
+                            style: AarogyaTypography.caption(secondaryText),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -200,7 +231,7 @@ class LaboratoryHubScreen extends ConsumerWidget {
           ),
 
           if (report.labTechnicianNotes != null) ...[
-            const SizedBox(height: AarogyaSpacing.md),
+            const SizedBox(height: AarogyaSpacing.sm),
             Row(
               children: [
                 const Icon(Icons.info_outline_rounded, size: 16, color: AarogyaColors.info),
@@ -215,20 +246,24 @@ class LaboratoryHubScreen extends ConsumerWidget {
             ),
           ],
 
-          const Divider(height: 24),
+          const Divider(height: 20),
 
           // Footer with dates and actions
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
             children: [
               Text(
                 'Sample Drawn: ${AarogyaFormatters.dateTime(report.orderDate)}',
                 style: AarogyaTypography.caption(secondaryText),
               ),
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   AarogyaButton(
-                    label: 'Share Report',
+                    label: 'Share',
                     variant: AarogyaButtonVariant.ghost,
                     icon: Icons.share_rounded,
                     size: AarogyaButtonSize.sm,
