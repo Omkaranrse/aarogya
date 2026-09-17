@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/design_system/glass/glass_container.dart';
@@ -372,62 +373,63 @@ class AdaptiveShell extends ConsumerWidget {
 
               const Spacer(),
 
-              // Role Switcher Dropdown (Compact on mobile)
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 12, vertical: 2),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0x331E293B) : const Color(0x1F0284C7),
-                  borderRadius: AarogyaRadius.radiusPill,
-                  border: Border.all(
-                    color: AarogyaColors.primaryCyan.withValues(alpha: 0.3),
+              // Role Switcher Dropdown — DEV ONLY (hidden in release builds)
+              if (kDebugMode) ...[
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 12, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0x331E293B) : const Color(0x1F0284C7),
+                    borderRadius: AarogyaRadius.radiusPill,
+                    border: Border.all(
+                      color: AarogyaColors.primaryCyan.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<UserRole>(
+                      value: role,
+                      isDense: true,
+                      icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: AarogyaColors.primaryCyan),
+                      dropdownColor: isDark ? AarogyaColors.darkSurface : AarogyaColors.lightSurface,
+                      borderRadius: AarogyaRadius.radiusMd,
+                      items: UserRole.values.take(3).map((r) {
+                        return DropdownMenuItem<UserRole>(
+                          value: r,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                r == UserRole.patient
+                                    ? Icons.person_rounded
+                                    : r == UserRole.doctor
+                                        ? Icons.medical_services_rounded
+                                        : Icons.admin_panel_settings_rounded,
+                                size: 14,
+                                color: AarogyaColors.primaryCyan,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                isMobile
+                                    ? (r == UserRole.patient ? 'Patient' : (r == UserRole.doctor ? 'Doctor' : 'Admin'))
+                                    : r.displayName,
+                                style: AarogyaTypography.caption(
+                                  isDark ? AarogyaColors.textDarkPrimary : AarogyaColors.textLightPrimary,
+                                ).copyWith(fontWeight: FontWeight.w700),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (newRole) {
+                        if (newRole != null) {
+                          ref.read(repositoryProvider).switchRole(newRole);
+                          ref.read(selectedTabIndexProvider.notifier).state = 0;
+                        }
+                      },
+                    ),
                   ),
                 ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<UserRole>(
-                    value: role,
-                    isDense: true,
-                    icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: AarogyaColors.primaryCyan),
-                    dropdownColor: isDark ? AarogyaColors.darkSurface : AarogyaColors.lightSurface,
-                    borderRadius: AarogyaRadius.radiusMd,
-                    items: UserRole.values.take(3).map((r) {
-                      return DropdownMenuItem<UserRole>(
-                        value: r,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              r == UserRole.patient
-                                  ? Icons.person_rounded
-                                  : r == UserRole.doctor
-                                      ? Icons.medical_services_rounded
-                                      : Icons.admin_panel_settings_rounded,
-                              size: 14,
-                              color: AarogyaColors.primaryCyan,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              isMobile
-                                  ? (r == UserRole.patient ? 'Patient' : (r == UserRole.doctor ? 'Doctor' : 'Admin'))
-                                  : r.displayName,
-                              style: AarogyaTypography.caption(
-                                isDark ? AarogyaColors.textDarkPrimary : AarogyaColors.textLightPrimary,
-                              ).copyWith(fontWeight: FontWeight.w700),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (newRole) {
-                      if (newRole != null) {
-                        ref.read(repositoryProvider).switchRole(newRole);
-                        ref.read(selectedTabIndexProvider.notifier).state = 0;
-                      }
-                    },
-                  ),
-                ),
-              ),
-
-              SizedBox(width: isMobile ? 4 : AarogyaSpacing.md),
+                SizedBox(width: isMobile ? 4 : AarogyaSpacing.md),
+              ],
 
               // Theme Toggle Button
               IconButton(
