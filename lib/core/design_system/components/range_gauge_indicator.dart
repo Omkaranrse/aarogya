@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../tokens/radius.dart';
 import '../../theme/aarogya_theme_tokens.dart';
+import 'reference_gauge_painter.dart';
 
 /// Clinical Reference Range Gauge Indicator.
 /// Visualizes diagnostic values against low / normal / high reference thresholds
@@ -40,20 +41,6 @@ class RangeGaugeIndicator extends StatelessWidget {
     final Color statusColor = isNormal
         ? colors.clinicalStable
         : (isLow ? colors.clinicalWarning : colors.clinicalCritical);
-
-    final span = (maxRange - minRange).abs();
-    final safeSpan = span == 0 ? 1.0 : span;
-    final displayMin = (minRange - safeSpan * 0.4).clamp(0.0, double.infinity);
-    final displayMax = maxRange + safeSpan * 0.4;
-    final totalSpan = (displayMax - displayMin).abs();
-    final safeTotalSpan = totalSpan == 0 ? 1.0 : totalSpan;
-
-    final normalStartRatio =
-        ((minRange - displayMin) / safeTotalSpan).clamp(0.0, 1.0);
-    final normalEndRatio =
-        ((maxRange - displayMin) / safeTotalSpan).clamp(0.0, 1.0);
-    final valueRatio =
-        ((value - displayMin) / safeTotalSpan).clamp(0.0, 1.0);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -130,126 +117,41 @@ class RangeGaugeIndicator extends StatelessWidget {
           const SizedBox(height: 8),
         ],
 
-        // 3-Zone Graphical Reference Range Visualizer (Low / Normal / High Bars)
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final width = constraints.maxWidth;
-            final normalLeft = (normalStartRatio * width).clamp(0.0, width);
-            final normalWidth =
-                ((normalEndRatio - normalStartRatio) * width).clamp(8.0, width);
-            final normalRight = (normalLeft + normalWidth).clamp(0.0, width);
-            final lowWidth = normalLeft.clamp(0.0, width);
-            final highWidth = (width - normalRight).clamp(0.0, width);
+        // Semantics-wrapped 3-Zone Graphical Reference Range Visualizer
+        Semantics(
+          label:
+              '${label ?? "Diagnostic measurement"}, ${_formatNum(value)} $unit, ${isNormal ? "normal" : (isLow ? "low" : "high")}, reference range ${_formatNum(minRange)} to ${_formatNum(maxRange)}',
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.maxWidth;
+              final isOverflow = maxRange > 0 && value > (maxRange * 1.35);
 
-            return TweenAnimationBuilder<double>(
-              duration: const Duration(milliseconds: 450),
-              curve: Curves.easeOutCubic,
-              tween: Tween<double>(begin: 0.0, end: valueRatio),
-              builder: (context, animValueRatio, _) {
-                final markerPos =
-                    (animValueRatio * width).clamp(6.0, width - 6.0);
-
-                return Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    // Segmented Graphical Bars (Low / Normal / High)
-                    ClipRRect(
-                      borderRadius: AarogyaRadius.radius4,
-                      child: SizedBox(
-                        height: 8,
-                        width: width,
-                        child: Row(
-                          children: [
-                            // 1. Low Segment Bar
-                            if (lowWidth > 0)
-                              Container(
-                                width: lowWidth,
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  color: isLow
-                                      ? colors.clinicalWarning.withValues(alpha: 0.85)
-                                      : colors.clinicalWarning.withValues(alpha: 0.22),
-                                  border: Border(
-                                    right: BorderSide(
-                                      color: colors.neutrals.gray900.withValues(alpha: 0.35),
-                                      width: 1.5,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            // 2. Normal Safe Zone Bar
-                            Expanded(
-                              child: Container(
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  color: isNormal
-                                      ? colors.clinicalStable.withValues(alpha: 0.85)
-                                      : colors.clinicalStable.withValues(alpha: 0.35),
-                                ),
-                              ),
-                            ),
-                            // 3. High Segment Bar
-                            if (highWidth > 0)
-                              Container(
-                                width: highWidth,
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  color: isHigh
-                                      ? colors.clinicalCritical.withValues(alpha: 0.85)
-                                      : colors.clinicalCritical.withValues(alpha: 0.22),
-                                  border: Border(
-                                    left: BorderSide(
-                                      color: colors.neutrals.gray900.withValues(alpha: 0.35),
-                                      width: 1.5,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
+              return TweenAnimationBuilder<double>(
+                duration: const Duration(milliseconds: 450),
+                curve: Curves.easeOutCubic,
+                tween: Tween<double>(begin: 0.0, end: 1.0),
+                builder: (context, animProgress, _) {
+                  return CustomPaint(
+                    size: Size(width, 8),
+                    painter: ReferenceGaugePainter(
+                      value: value,
+                      minRange: minRange,
+                      maxRange: maxRange,
+                      lowColor: colors.clinicalWarning,
+                      normalColor: colors.clinicalStable,
+                      highColor: colors.clinicalCritical,
+                      pinColor: statusColor,
+                      isLow: isLow,
+                      isNormal: isNormal,
+                      isHigh: isHigh,
+                      isOverflow: isOverflow,
+                      animationProgress: animProgress,
                     ),
-
-                    // Active Patient Value Pin with Glow
-                    Positioned(
-                      left: markerPos - 6,
-                      top: -4,
-                      child: Container(
-                        width: 16,
-                        height: 16,
-                        decoration: BoxDecoration(
-                          color: statusColor,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Colors.white,
-                            width: 2.5,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: statusColor.withValues(alpha: 0.55),
-                              blurRadius: 6,
-                              spreadRadius: 1,
-                              offset: const Offset(0, 1),
-                            ),
-                          ],
-                        ),
-                        child: Center(
-                          child: Container(
-                            width: 4,
-                            height: 4,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            );
-          },
+                  );
+                },
+              );
+            },
+          ),
         ),
 
         if (showBandLabels) ...[

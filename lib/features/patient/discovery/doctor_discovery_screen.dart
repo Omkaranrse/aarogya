@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -16,7 +17,10 @@ import '../../../shared/state/aarogya_providers.dart';
 import '../booking/appointment_booking_sheet.dart';
 import 'doctor_detail_sheet.dart';
 
-class DoctorDiscoveryScreen extends ConsumerWidget {
+enum ConsultationModeFilter { all, inPerson, video }
+enum FeeRangeFilter { all, under600, midRange, premium }
+
+class DoctorDiscoveryScreen extends ConsumerStatefulWidget {
   const DoctorDiscoveryScreen({super.key});
 
   static const List<String> specialties = [
@@ -29,8 +33,31 @@ class DoctorDiscoveryScreen extends ConsumerWidget {
   ];
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final filteredDoctors = ref.watch(filteredDoctorsProvider);
+  ConsumerState<DoctorDiscoveryScreen> createState() =>
+      _DoctorDiscoveryScreenState();
+}
+
+class _DoctorDiscoveryScreenState extends ConsumerState<DoctorDiscoveryScreen> {
+  Timer? _debounceTimer;
+  ConsultationModeFilter _modeFilter = ConsultationModeFilter.all;
+  FeeRangeFilter _feeFilter = FeeRangeFilter.all;
+
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    super.dispose();
+  }
+
+  void _onSearchChanged(String query) {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+      ref.read(doctorSearchQueryProvider.notifier).state = query;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final rawFilteredDoctors = ref.watch(filteredDoctorsProvider);
     final selectedSpecialty =
         ref.watch(selectedSpecialtyFilterProvider) ?? 'All';
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -41,6 +68,27 @@ class DoctorDiscoveryScreen extends ConsumerWidget {
     final secondaryText = isDark
         ? AarogyaColors.textDarkSecondary
         : AarogyaColors.textLightSecondary;
+    final accentColor = isDark
+        ? AarogyaColors.primaryCyan
+        : AarogyaColors.primaryBlue;
+
+    // Multi-criteria filtering: fee & mode
+    final filteredDoctors = rawFilteredDoctors.where((doc) {
+      if (_feeFilter == FeeRangeFilter.under600 && doc.consultationFee >= 600) {
+        return false;
+      }
+      if (_feeFilter == FeeRangeFilter.midRange &&
+          (doc.consultationFee < 600 || doc.consultationFee > 1000)) {
+        return false;
+      }
+      if (_feeFilter == FeeRangeFilter.premium && doc.consultationFee <= 1000) {
+        return false;
+      }
+      if (_modeFilter == ConsultationModeFilter.video && !doc.isAvailableToday) {
+        return false;
+      }
+      return true;
+    }).toList();
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -59,60 +107,68 @@ class DoctorDiscoveryScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
 
-            // Search Bar
+            // 300ms Debounced Search Bar
             AarogyaTextField(
               hintText: 'Search doctor, specialty, or hospital...',
               prefixIcon: Icons.search_rounded,
               showClearButton: true,
-              onChanged: (val) =>
-                  ref.read(doctorSearchQueryProvider.notifier).state = val,
+              onChanged: _onSearchChanged,
             ),
             const SizedBox(height: 8),
 
-            // Specialty Filter Chips
+            // Primary Specialty Filter Chips
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
-                children: specialties.map((spec) {
+                children: DoctorDiscoveryScreen.specialties.map((spec) {
                   final isSelected = selectedSpecialty == spec;
+                  final count = spec == 'All'
+                      ? ref.watch(doctorsListProvider).length
+                      : ref
+                          .watch(doctorsListProvider)
+                          .where((d) => d.specialty.toLowerCase().contains(spec.toLowerCase()))
+                          .length;
+
                   return Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: ChoiceChip(
-                      label: Text(spec),
+                      label: Text('$spec ($count)'),
                       selected: isSelected,
-                      onSelected: (_) =>
-                          ref
-                                  .read(
-                                    selectedSpecialtyFilterProvider.notifier,
-                                  )
-                                  .state =
-                              spec,
+                      onSelected: count > 0 || spec == 'All'
+                          ? (_) => ref
+                              .read(selectedSpecialtyFilterProvider.notifier)
+                              .state = spec
+                          : null,
                       selectedColor: isDark
                           ? AarogyaColors.primaryCyan.withValues(alpha: 0.15)
                           : AarogyaColors.primaryBlue.withValues(alpha: 0.12),
                       backgroundColor: Colors.transparent,
-                      labelStyle:
-                          AarogyaTypography.caption(
-                            isSelected
+                      disabledColor: Colors.transparent,
+                      labelStyle: AarogyaTypography.caption(
+                        count == 0 && spec != 'All'
+                            ? (isDark
+                                ? AarogyaColors.textDarkMuted
+                                : AarogyaColors.textLightMuted)
+                            : (isSelected
                                 ? (isDark
-                                      ? AarogyaColors.primaryCyan
-                                      : AarogyaColors.primaryBlue)
-                                : secondaryText,
-                          ).copyWith(
-                            fontWeight: isSelected
-                                ? FontWeight.w700
-                                : FontWeight.w500,
-                          ),
+                                    ? AarogyaColors.primaryCyan
+                                    : AarogyaColors.primaryBlue)
+                                : secondaryText),
+                      ).copyWith(
+                        fontWeight: isSelected && (count > 0 || spec == 'All')
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: AarogyaRadius.radiusPill,
                         side: BorderSide(
-                          color: isSelected
+                          color: isSelected && (count > 0 || spec == 'All')
                               ? (isDark
-                                    ? AarogyaColors.primaryCyan
-                                    : AarogyaColors.primaryBlue)
+                                  ? AarogyaColors.primaryCyan
+                                  : AarogyaColors.primaryBlue)
                               : (isDark
-                                    ? AarogyaColors.darkGlassBorderSubtle
-                                    : AarogyaColors.lightGlassBorderSubtle),
+                                  ? AarogyaColors.darkGlassBorderSubtle
+                                  : AarogyaColors.lightGlassBorderSubtle),
                         ),
                       ),
                     ),
@@ -120,23 +176,118 @@ class DoctorDiscoveryScreen extends ConsumerWidget {
                 }).toList(),
               ),
             ),
+            const SizedBox(height: 6),
+
+            // Multi-criteria secondary filters: Fee Range & Mode
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _buildSecondaryChip(
+                    label: 'All Modes',
+                    isSelected: _modeFilter == ConsultationModeFilter.all,
+                    onTap: () => setState(() => _modeFilter = ConsultationModeFilter.all),
+                    accentColor: accentColor,
+                    secondaryText: secondaryText,
+                    isDark: isDark,
+                  ),
+                  const SizedBox(width: 6),
+                  _buildSecondaryChip(
+                    label: 'Video Consult',
+                    isSelected: _modeFilter == ConsultationModeFilter.video,
+                    onTap: () => setState(() => _modeFilter = ConsultationModeFilter.video),
+                    accentColor: accentColor,
+                    secondaryText: secondaryText,
+                    isDark: isDark,
+                  ),
+                  const SizedBox(width: 6),
+                  _buildSecondaryChip(
+                    label: 'In-Person',
+                    isSelected: _modeFilter == ConsultationModeFilter.inPerson,
+                    onTap: () => setState(() => _modeFilter = ConsultationModeFilter.inPerson),
+                    accentColor: accentColor,
+                    secondaryText: secondaryText,
+                    isDark: isDark,
+                  ),
+                  const SizedBox(width: 12),
+                  Container(
+                    height: 16,
+                    width: 1,
+                    color: isDark ? Colors.white24 : Colors.black12,
+                  ),
+                  const SizedBox(width: 12),
+                  _buildSecondaryChip(
+                    label: 'All Fees',
+                    isSelected: _feeFilter == FeeRangeFilter.all,
+                    onTap: () => setState(() => _feeFilter = FeeRangeFilter.all),
+                    accentColor: accentColor,
+                    secondaryText: secondaryText,
+                    isDark: isDark,
+                  ),
+                  const SizedBox(width: 6),
+                  _buildSecondaryChip(
+                    label: '< ₹600',
+                    isSelected: _feeFilter == FeeRangeFilter.under600,
+                    onTap: () => setState(() => _feeFilter = FeeRangeFilter.under600),
+                    accentColor: accentColor,
+                    secondaryText: secondaryText,
+                    isDark: isDark,
+                  ),
+                  const SizedBox(width: 6),
+                  _buildSecondaryChip(
+                    label: '₹600 - ₹1,000',
+                    isSelected: _feeFilter == FeeRangeFilter.midRange,
+                    onTap: () => setState(() => _feeFilter = FeeRangeFilter.midRange),
+                    accentColor: accentColor,
+                    secondaryText: secondaryText,
+                    isDark: isDark,
+                  ),
+                  const SizedBox(width: 6),
+                  _buildSecondaryChip(
+                    label: '₹1,000+',
+                    isSelected: _feeFilter == FeeRangeFilter.premium,
+                    onTap: () => setState(() => _feeFilter = FeeRangeFilter.premium),
+                    accentColor: accentColor,
+                    secondaryText: secondaryText,
+                    isDark: isDark,
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 8),
 
             // Doctors Grid / List
             Expanded(
               child: filteredDoctors.isEmpty
-                  ? AarogyaEmptyState(
-                      icon: Icons.person_search_rounded,
-                      title: 'No Doctors Found',
-                      description: 'Try adjusting your search keywords or clearing specialty filters.',
-                      actionLabel: 'Reset Filters',
-                      onAction: () {
-                        ref.read(doctorSearchQueryProvider.notifier).state = '';
-                        ref
-                                .read(selectedSpecialtyFilterProvider.notifier)
-                                .state =
-                            'All';
-                      },
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const AarogyaEmptyState(
+                            icon: Icons.person_search_rounded,
+                            title: 'No Doctors Found',
+                            description:
+                                'Try adjusting your search keywords or clearing active filters.',
+                          ),
+                          const SizedBox(height: 12),
+                          AarogyaButton(
+                            label: 'Reset Filters',
+                            variant: AarogyaButtonVariant.secondary,
+                            icon: Icons.filter_alt_off_rounded,
+                            size: AarogyaButtonSize.sm,
+                            onPressed: () {
+                              ref.read(doctorSearchQueryProvider.notifier).state = '';
+                              ref
+                                  .read(selectedSpecialtyFilterProvider.notifier)
+                                  .state = 'All';
+                              setState(() {
+                                _feeFilter = FeeRangeFilter.all;
+                                _modeFilter = ConsultationModeFilter.all;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
                     )
                   : LayoutBuilder(
                       builder: (context, constraints) {
@@ -145,15 +296,15 @@ class DoctorDiscoveryScreen extends ConsumerWidget {
                             : (constraints.maxWidth > 750 ? 2 : 1);
 
                         return GridView.builder(
-                          padding: EdgeInsets.zero,
+                          padding: const EdgeInsets.only(bottom: 24),
                           itemCount: filteredDoctors.length,
                           gridDelegate:
                               SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: crossCount,
-                                crossAxisSpacing: 12,
-                                mainAxisSpacing: 12,
-                                mainAxisExtent: 190,
-                              ),
+                            crossAxisCount: crossCount,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            mainAxisExtent: 240,
+                          ),
                           itemBuilder: (context, index) {
                             final doctor = filteredDoctors[index];
                             return _buildDoctorCard(
@@ -174,6 +325,44 @@ class DoctorDiscoveryScreen extends ConsumerWidget {
     );
   }
 
+  Widget _buildSecondaryChip({
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+    required Color accentColor,
+    required Color secondaryText,
+    required bool isDark,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: isSelected ? accentColor.withValues(alpha: 0.15) : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected
+                ? accentColor
+                : (isDark
+                    ? AarogyaColors.darkGlassBorderSubtle
+                    : AarogyaColors.lightGlassBorderSubtle),
+            width: 0.8,
+          ),
+        ),
+        child: Text(
+          label,
+          style: AarogyaTypography.caption(
+            isSelected ? accentColor : secondaryText,
+          ).copyWith(
+            fontSize: 11,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildDoctorCard(
     BuildContext context,
     Doctor doctor,
@@ -183,6 +372,12 @@ class DoctorDiscoveryScreen extends ConsumerWidget {
   ) {
     final colors = context.aarogyaColors;
     final typography = context.aarogyaTypography;
+
+    final nextSlotText = doctor.isAvailableToday
+        ? 'Next: Today ${doctor.timeSlots.isNotEmpty ? doctor.timeSlots.first : "4:30 PM"}'
+        : 'Next: Tomorrow ${doctor.timeSlots.isNotEmpty ? doctor.timeSlots.first : "10:00 AM"}';
+
+    final previewSlots = doctor.timeSlots.take(3).toList();
 
     return Container(
       decoration: BoxDecoration(
@@ -234,10 +429,10 @@ class DoctorDiscoveryScreen extends ConsumerWidget {
             ],
           ),
 
-          // Fixed Visual Telemetry Row: Rating | Experience | Availability
+          // Standardized Availability Chip & Telemetry Row
           Container(
-            margin: const EdgeInsets.symmetric(vertical: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            margin: const EdgeInsets.symmetric(vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
               color: colors.surfaceActionable,
               borderRadius: AarogyaRadius.radius8,
@@ -246,7 +441,7 @@ class DoctorDiscoveryScreen extends ConsumerWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Fixed Slot 1: Rating
+                // Slot 1: Rating
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -273,7 +468,7 @@ class DoctorDiscoveryScreen extends ConsumerWidget {
                   ],
                 ),
 
-                // Fixed Slot 2: Experience
+                // Slot 2: Experience
                 Text(
                   '${doctor.experienceYears} yrs exp',
                   style: typography.caption.copyWith(
@@ -282,7 +477,7 @@ class DoctorDiscoveryScreen extends ConsumerWidget {
                   ),
                 ),
 
-                // Fixed Slot 3: Availability Badge
+                // Slot 3: Time-based availability chip
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 6,
@@ -300,36 +495,85 @@ class DoctorDiscoveryScreen extends ConsumerWidget {
                       width: 0.8,
                     ),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 5,
-                        height: 5,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: doctor.isAvailableToday
-                              ? colors.clinicalStable
-                              : colors.neutrals.gray500,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        doctor.isAvailableToday ? 'Available' : 'Tomorrow',
-                        style: typography.caption.copyWith(
-                          color: doctor.isAvailableToday
-                              ? colors.clinicalStable
-                              : colors.neutrals.gray600,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 9.5,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    nextSlotText,
+                    style: typography.caption.copyWith(
+                      color: doctor.isAvailableToday
+                          ? colors.clinicalStable
+                          : colors.neutrals.gray600,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 9.5,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
+
+          // 1-Tap Quick Bookable Slots Row
+          if (previewSlots.isNotEmpty) ...[
+            Row(
+              children: [
+                Text(
+                  'Slots: ',
+                  style: typography.caption.copyWith(
+                    fontSize: 10,
+                    color: colors.neutrals.gray500,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: previewSlots.map((slot) {
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(6),
+                            onTap: () {
+                              showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: Colors.transparent,
+                                builder: (_) =>
+                                    AppointmentBookingSheet(doctor: doctor),
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: colors.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: colors.primary.withValues(alpha: 0.3),
+                                  width: 0.8,
+                                ),
+                              ),
+                              child: Text(
+                                slot,
+                                style: typography.caption.copyWith(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: colors.primary,
+                                  fontFeatures: const [
+                                    FontFeature.tabularFigures()
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
 
           // Compressed Price & Unified CTA Row
           Row(

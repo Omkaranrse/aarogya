@@ -23,6 +23,9 @@ import '../domain/models/user.dart';
 // Theme Mode Provider (Clinical Light default)
 final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.light);
 
+// Connectivity & Online Status Provider
+final isOnlineProvider = StateProvider<bool>((ref) => true);
+
 // Master Repository Provider
 final repositoryProvider = ChangeNotifierProvider<AarogyaRepository>((ref) {
   return AarogyaRepository();

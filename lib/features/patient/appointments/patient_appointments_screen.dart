@@ -70,6 +70,11 @@ class _PatientAppointmentsScreenState
         filtered = appointments;
     }
 
+    final allCount = appointments.length;
+    final upcomingCount = appointments.where((a) => a.status == AppointmentStatus.confirmed || a.status == AppointmentStatus.upcoming).length;
+    final completedCount = appointments.where((a) => a.status == AppointmentStatus.completed).length;
+    final cancelledCount = appointments.where((a) => a.status == AppointmentStatus.cancelled).length;
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Padding(
@@ -83,35 +88,23 @@ class _PatientAppointmentsScreenState
             ContextualHeader(
               title: 'My Consultations',
               subtitle: 'Track upcoming appointments and clinical schedules',
-              statusLabel: '${appointments.length} Total',
+              statusLabel: '$allCount Total',
               statusColor: context.aarogyaColors.primary,
             ),
             const SizedBox(height: 10),
 
-            // Tab bar filter
+            // Tab bar filter with counts and disabling 0-count tabs
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  _buildTab('All (${appointments.length})', 0, isDark),
+                  _buildTab('All ($allCount)', 0, allCount, isDark),
                   const SizedBox(width: 8),
-                  _buildTab(
-                    'Upcoming (${appointments.where((a) => a.status == AppointmentStatus.confirmed || a.status == AppointmentStatus.upcoming).length})',
-                    1,
-                    isDark,
-                  ),
+                  _buildTab('Upcoming ($upcomingCount)', 1, upcomingCount, isDark),
                   const SizedBox(width: 8),
-                  _buildTab(
-                    'Completed (${appointments.where((a) => a.status == AppointmentStatus.completed).length})',
-                    2,
-                    isDark,
-                  ),
+                  _buildTab('Completed ($completedCount)', 2, completedCount, isDark),
                   const SizedBox(width: 8),
-                  _buildTab(
-                    'Cancelled (${appointments.where((a) => a.status == AppointmentStatus.cancelled).length})',
-                    3,
-                    isDark,
-                  ),
+                  _buildTab('Cancelled ($cancelledCount)', 3, cancelledCount, isDark),
                 ],
               ),
             ),
@@ -120,11 +113,28 @@ class _PatientAppointmentsScreenState
             // Appointments List
             Expanded(
               child: filtered.isEmpty
-                  ? const AarogyaEmptyState(
-                      icon: Icons.event_busy_rounded,
-                      title: 'No Appointments Found',
-                      description:
-                          'No consultations match the selected status filter.',
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const AarogyaEmptyState(
+                            icon: Icons.event_busy_rounded,
+                            title: 'No Appointments Found',
+                            description:
+                                'No consultations match the selected status filter.',
+                          ),
+                          if (_selectedTabIndex != 0) ...[
+                            const SizedBox(height: 12),
+                            AarogyaButton(
+                              label: 'Clear filter',
+                              variant: AarogyaButtonVariant.secondary,
+                              icon: Icons.filter_alt_off_rounded,
+                              size: AarogyaButtonSize.sm,
+                              onPressed: () => setState(() => _selectedTabIndex = 0),
+                            ),
+                          ],
+                        ],
+                      ),
                     )
                   : LayoutBuilder(
                       builder: (context, constraints) {
@@ -179,16 +189,18 @@ class _PatientAppointmentsScreenState
     );
   }
 
-  Widget _buildTab(String label, int index, bool isDark) {
+  Widget _buildTab(String label, int index, int count, bool isDark) {
     final isSelected = _selectedTabIndex == index;
+    final isEnabled = count > 0 || index == 0;
     return ChoiceChip(
       label: Text(label),
       selected: isSelected,
-      onSelected: (_) => setState(() => _selectedTabIndex = index),
+      onSelected: isEnabled ? (_) => setState(() => _selectedTabIndex = index) : null,
       selectedColor:
           (isDark ? AarogyaColors.primaryCyan : AarogyaColors.primaryBlue)
               .withValues(alpha: 0.15),
       backgroundColor: Colors.transparent,
+      disabledColor: Colors.transparent,
       side: BorderSide(
         color: isSelected
             ? (isDark ? AarogyaColors.primaryCyan : AarogyaColors.primaryBlue)
@@ -197,12 +209,14 @@ class _PatientAppointmentsScreenState
                   : AarogyaColors.lightGlassBorderSubtle),
       ),
       labelStyle: AarogyaTypography.caption(
-        isSelected
-            ? (isDark ? AarogyaColors.primaryCyan : AarogyaColors.primaryBlue)
-            : (isDark
-                  ? AarogyaColors.textDarkSecondary
-                  : AarogyaColors.textLightSecondary),
-      ).copyWith(fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500),
+        !isEnabled
+            ? (isDark ? AarogyaColors.textDarkMuted : AarogyaColors.textLightMuted)
+            : (isSelected
+                ? (isDark ? AarogyaColors.primaryCyan : AarogyaColors.primaryBlue)
+                : (isDark
+                      ? AarogyaColors.textDarkSecondary
+                      : AarogyaColors.textLightSecondary)),
+      ).copyWith(fontWeight: isSelected && isEnabled ? FontWeight.w700 : FontWeight.w500),
     );
   }
 
@@ -231,9 +245,13 @@ class _PatientAppointmentsScreenState
         badgeVariant = AarogyaBadgeVariant.info;
     }
 
+    final isInQueue =
+        apt.status == AppointmentStatus.waiting ||
+        apt.status == AppointmentStatus.inProgress;
     final isUpcoming =
-        apt.status == AppointmentStatus.confirmed ||
-        apt.status == AppointmentStatus.upcoming;
+        (apt.status == AppointmentStatus.confirmed ||
+            apt.status == AppointmentStatus.upcoming) &&
+        !isInQueue;
     final isCompleted = apt.status == AppointmentStatus.completed;
 
     return GlassCard(
@@ -349,11 +367,7 @@ class _PatientAppointmentsScreenState
                                         ? AarogyaColors.warning
                                         : AarogyaColors.info,
                                     size: 4.5,
-                                    animate:
-                                        apt.status ==
-                                            AppointmentStatus.waiting ||
-                                        apt.status ==
-                                            AppointmentStatus.inProgress,
+                                    animate: isInQueue,
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
@@ -462,7 +476,7 @@ class _PatientAppointmentsScreenState
               ),
             ),
           ],
-          if (apt.status == AppointmentStatus.waiting) ...[
+          if (isInQueue) ...[
             const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
@@ -482,7 +496,7 @@ class _PatientAppointmentsScreenState
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Checked In at Triage Desk • Token #${apt.tokenNumber} • Waiting in Live Queue',
+                      'Checked In at Triage Desk • Token #${apt.tokenNumber} • Active in Live Queue',
                       style: AarogyaTypography.caption(AarogyaColors.success)
                           .copyWith(fontWeight: FontWeight.w600),
                     ),
@@ -540,7 +554,16 @@ class _PatientAppointmentsScreenState
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (isUpcoming) ...[
+                  if (isInQueue) ...[
+                    AarogyaButton(
+                      label: 'View live queue',
+                      icon: Icons.access_time_filled_rounded,
+                      size: AarogyaButtonSize.sm,
+                      onPressed: () {
+                        ref.read(selectedTabIndexProvider.notifier).state = 0; // Navigate to Overview / Live Queue tracker
+                      },
+                    ),
+                  ] else if (isUpcoming) ...[
                     AarogyaButton(
                       label: 'Reschedule',
                       variant: AarogyaButtonVariant.primary,

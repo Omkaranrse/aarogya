@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/design_system/tokens/colors.dart';
 import '../../core/design_system/tokens/radius.dart';
 import '../../core/design_system/tokens/typography.dart';
+import '../../core/design_system/components/aarogya_button.dart';
 import '../../core/design_system/components/aarogya_empty_state.dart';
 import '../../core/design_system/components/contextual_header.dart';
 import '../../core/design_system/components/timeline_entry_card.dart';
@@ -63,13 +64,13 @@ class _MedicalRecordsScreenState extends ConsumerState<MedicalRecordsScreen> {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  _buildFilterChip('All (${records.length})', _selectedFilter == null, () {
+                  _buildFilterChip('All (${records.length})', _selectedFilter == null, records.length, () {
                     setState(() => _selectedFilter = null);
                   }, isDark),
                   ...MedicalRecordType.values.map((type) {
                     final isSelected = _selectedFilter == type;
                     final count = records.where((r) => r.type == type).length;
-                    return _buildFilterChip('${type.displayName} ($count)', isSelected, () {
+                    return _buildFilterChip('${type.displayName} ($count)', isSelected, count, () {
                       setState(() => _selectedFilter = type);
                     }, isDark);
                   }),
@@ -81,10 +82,27 @@ class _MedicalRecordsScreenState extends ConsumerState<MedicalRecordsScreen> {
             // Timeline Feed
             Expanded(
               child: filtered.isEmpty
-                  ? const AarogyaEmptyState(
-                      icon: Icons.history_edu_outlined,
-                      title: 'No Medical Records Found',
-                      description: 'Records matching the selected filter will appear here in chronological order.',
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const AarogyaEmptyState(
+                            icon: Icons.history_edu_outlined,
+                            title: 'No Medical Records Found',
+                            description: 'Records matching the selected filter will appear here in chronological order.',
+                          ),
+                          if (_selectedFilter != null) ...[
+                            const SizedBox(height: 12),
+                            AarogyaButton(
+                              label: 'Clear filter',
+                              variant: AarogyaButtonVariant.secondary,
+                              icon: Icons.filter_alt_off_rounded,
+                              size: AarogyaButtonSize.sm,
+                              onPressed: () => setState(() => _selectedFilter = null),
+                            ),
+                          ],
+                        ],
+                      ),
                     )
                   : ListView.builder(
                       padding: EdgeInsets.zero,
@@ -112,6 +130,7 @@ class _MedicalRecordsScreenState extends ConsumerState<MedicalRecordsScreen> {
   Widget _buildFilterChip(
     String label,
     bool isSelected,
+    int count,
     VoidCallback onTap,
     bool isDark,
   ) {
@@ -124,20 +143,23 @@ class _MedicalRecordsScreenState extends ConsumerState<MedicalRecordsScreen> {
       child: ChoiceChip(
         label: Text(label),
         selected: isSelected,
-        onSelected: (_) => onTap(),
+        onSelected: count > 0 ? (_) => onTap() : null,
         selectedColor: accentColor.withValues(alpha: 0.15),
         backgroundColor: Colors.transparent,
+        disabledColor: Colors.transparent,
         labelStyle: AarogyaTypography.caption(
-          isSelected
-              ? accentColor
-              : (isDark
-                    ? AarogyaColors.textDarkSecondary
-                    : AarogyaColors.textLightSecondary),
-        ).copyWith(fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500),
+          count == 0
+              ? (isDark ? AarogyaColors.textDarkMuted : AarogyaColors.textLightMuted)
+              : (isSelected
+                  ? accentColor
+                  : (isDark
+                        ? AarogyaColors.textDarkSecondary
+                        : AarogyaColors.textLightSecondary)),
+        ).copyWith(fontWeight: isSelected && count > 0 ? FontWeight.w700 : FontWeight.w500),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
           side: BorderSide(
-            color: isSelected
+            color: isSelected && count > 0
                 ? accentColor
                 : (isDark
                       ? AarogyaColors.darkGlassBorderSubtle

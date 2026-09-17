@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../tokens/radius.dart';
+import '../tokens/spacing.dart';
 
 class AarogyaSkeleton extends StatefulWidget {
   final double? width;
@@ -61,6 +62,62 @@ class _AarogyaSkeletonState extends State<AarogyaSkeleton>
           ),
         );
       },
+    );
+  }
+}
+
+/// Shimmer card skeleton matching standard Aarogya GlassCard layout
+class AarogyaCardSkeleton extends StatelessWidget {
+  final double height;
+  const AarogyaCardSkeleton({super.key, this.height = 130});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      height: height,
+      padding: AarogyaSpacing.paddingMd,
+      decoration: BoxDecoration(
+        color: (isDark ? const Color(0xFF1E293B) : Colors.white).withValues(alpha: 0.4),
+        borderRadius: AarogyaRadius.radius12,
+        border: Border.all(
+          color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
+        ),
+      ),
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              AarogyaSkeleton(
+                width: 44,
+                height: 44,
+                borderRadius: BorderRadius.all(Radius.circular(22)),
+              ),
+              SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AarogyaSkeleton(width: 140, height: 16),
+                    SizedBox(height: 6),
+                    AarogyaSkeleton(width: 200, height: 12),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              AarogyaSkeleton(width: 80, height: 18),
+              AarogyaSkeleton(width: 100, height: 32),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

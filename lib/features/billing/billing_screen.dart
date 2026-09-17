@@ -111,6 +111,7 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
                   _buildFilterChip(
                     'All (${invoices.length})',
                     0,
+                    invoices.length,
                     isDark,
                     primaryText,
                     secondaryText,
@@ -119,6 +120,7 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
                   _buildFilterChip(
                     'Pending (${invoices.where((i) => i.status == InvoiceStatus.pending).length})',
                     1,
+                    invoices.where((i) => i.status == InvoiceStatus.pending).length,
                     isDark,
                     primaryText,
                     secondaryText,
@@ -127,6 +129,7 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
                   _buildFilterChip(
                     'Paid (${invoices.where((i) => i.status == InvoiceStatus.paid).length})',
                     2,
+                    invoices.where((i) => i.status == InvoiceStatus.paid).length,
                     isDark,
                     primaryText,
                     secondaryText,
@@ -139,10 +142,27 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
             // Invoices List
             Expanded(
               child: filtered.isEmpty
-                  ? const AarogyaEmptyState(
-                      icon: Icons.receipt_long_outlined,
-                      title: 'No Invoices Found',
-                      description: 'No medical invoices currently match the selected payment status.',
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const AarogyaEmptyState(
+                            icon: Icons.receipt_long_outlined,
+                            title: 'No Invoices Found',
+                            description: 'No medical invoices currently match the selected payment status.',
+                          ),
+                          if (_selectedFilter != 0) ...[
+                            const SizedBox(height: 12),
+                            AarogyaButton(
+                              label: 'Clear filter',
+                              variant: AarogyaButtonVariant.secondary,
+                              icon: Icons.filter_alt_off_rounded,
+                              size: AarogyaButtonSize.sm,
+                              onPressed: () => setState(() => _selectedFilter = 0),
+                            ),
+                          ],
+                        ],
+                      ),
                     )
                   : ListView.separated(
                       padding: const EdgeInsets.only(bottom: 24),
@@ -171,11 +191,13 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
   Widget _buildFilterChip(
     String label,
     int index,
+    int count,
     bool isDark,
     Color primaryText,
     Color secondaryText,
   ) {
     final isSelected = _selectedFilter == index;
+    final isEnabled = count > 0 || index == 0;
     final accentColor = isDark
         ? AarogyaColors.primaryCyan
         : AarogyaColors.primaryBlue;
@@ -183,16 +205,19 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
     return ChoiceChip(
       label: Text(label),
       selected: isSelected,
-      onSelected: (_) => setState(() => _selectedFilter = index),
+      onSelected: isEnabled ? (_) => setState(() => _selectedFilter = index) : null,
       selectedColor: accentColor.withValues(alpha: 0.15),
       backgroundColor: Colors.transparent,
+      disabledColor: Colors.transparent,
       labelStyle: AarogyaTypography.caption(
-        isSelected ? accentColor : secondaryText,
-      ).copyWith(fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500),
+        !isEnabled
+            ? (isDark ? AarogyaColors.textDarkMuted : AarogyaColors.textLightMuted)
+            : (isSelected ? accentColor : secondaryText),
+      ).copyWith(fontWeight: isSelected && isEnabled ? FontWeight.w700 : FontWeight.w500),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: BorderSide(
-          color: isSelected
+          color: isSelected && isEnabled
               ? accentColor
               : (isDark
                     ? AarogyaColors.darkGlassBorderSubtle

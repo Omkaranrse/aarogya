@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/clinical/reference_range_service.dart';
 import '../../core/design_system/glass/glass_card.dart';
 import '../../core/design_system/tokens/colors.dart';
 import '../../core/design_system/tokens/radius.dart';
@@ -67,7 +68,7 @@ class _LaboratoryHubScreenState extends ConsumerState<LaboratoryHubScreen> {
             ),
             const SizedBox(height: 8),
 
-            // Filter Tabs
+            // Filter Tabs with counts & disabled state when 0
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
@@ -101,21 +102,26 @@ class _LaboratoryHubScreenState extends ConsumerState<LaboratoryHubScreen> {
                   ChoiceChip(
                     label: Text('Abnormal Flagged ($abnormalCount)'),
                     selected: _onlyAbnormal,
-                    onSelected: (_) => setState(() => _onlyAbnormal = true),
+                    onSelected: abnormalCount > 0
+                        ? (_) => setState(() => _onlyAbnormal = true)
+                        : null,
                     selectedColor: AarogyaColors.critical.withValues(alpha: 0.15),
                     backgroundColor: Colors.transparent,
+                    disabledColor: Colors.transparent,
                     labelStyle:
                         AarogyaTypography.caption(
-                          _onlyAbnormal ? AarogyaColors.critical : secondaryText,
+                          abnormalCount == 0
+                              ? (isDark ? AarogyaColors.textDarkMuted : AarogyaColors.textLightMuted)
+                              : (_onlyAbnormal ? AarogyaColors.critical : secondaryText),
                         ).copyWith(
-                          fontWeight: _onlyAbnormal
+                          fontWeight: _onlyAbnormal && abnormalCount > 0
                               ? FontWeight.w700
                               : FontWeight.w500,
                         ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                       side: BorderSide(
-                        color: _onlyAbnormal
+                        color: _onlyAbnormal && abnormalCount > 0
                             ? AarogyaColors.critical
                             : (isDark
                                   ? AarogyaColors.darkGlassBorderSubtle
@@ -130,11 +136,28 @@ class _LaboratoryHubScreenState extends ConsumerState<LaboratoryHubScreen> {
 
             Expanded(
               child: filtered.isEmpty
-                  ? const AarogyaEmptyState(
-                      icon: Icons.biotech_outlined,
-                      title: 'No Reports Found',
-                      description:
-                          'No diagnostic panels match the selected filter.',
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const AarogyaEmptyState(
+                            icon: Icons.biotech_outlined,
+                            title: 'No Reports Found',
+                            description:
+                                'No diagnostic panels match the selected filter.',
+                          ),
+                          if (_onlyAbnormal) ...[
+                            const SizedBox(height: 12),
+                            AarogyaButton(
+                              label: 'Clear filter',
+                              variant: AarogyaButtonVariant.secondary,
+                              icon: Icons.filter_alt_off_rounded,
+                              size: AarogyaButtonSize.sm,
+                              onPressed: () => setState(() => _onlyAbnormal = false),
+                            ),
+                          ],
+                        ],
+                      ),
                     )
                   : LayoutBuilder(
                       builder: (context, constraints) {
@@ -442,6 +465,13 @@ class _LaboratoryHubScreenState extends ConsumerState<LaboratoryHubScreen> {
               children: report.items.asMap().entries.map((entry) {
                 final idx = entry.key;
                 final item = entry.value;
+                final eval = ReferenceRangeService.evaluate(
+                  testName: item.testName,
+                  value: item.value,
+                  unit: item.unit,
+                  minRange: item.minRange,
+                  maxRange: item.maxRange,
+                );
 
                 return Container(
                   padding: const EdgeInsets.symmetric(
@@ -460,12 +490,12 @@ class _LaboratoryHubScreenState extends ConsumerState<LaboratoryHubScreen> {
                         : null,
                   ),
                   child: RangeGaugeIndicator(
-                    label: item.testName,
-                    value: item.value,
-                    minRange: item.minRange,
-                    maxRange: item.maxRange,
-                    unit: item.unit,
-                    statusLabel: item.status.label,
+                    label: eval.analyte,
+                    value: eval.value,
+                    minRange: eval.minRange,
+                    maxRange: eval.maxRange,
+                    unit: eval.unit,
+                    statusLabel: eval.label,
                     showHeader: true,
                     showBandLabels: true,
                   ),
@@ -496,7 +526,7 @@ class _LaboratoryHubScreenState extends ConsumerState<LaboratoryHubScreen> {
 
           const Divider(height: 18),
 
-          // Footer with dates and actions
+          // Footer with dates and actions: Share with doctor (Primary) & Print/PDF (Secondary)
           Wrap(
             alignment: WrapAlignment.spaceBetween,
             crossAxisAlignment: WrapCrossAlignment.center,
@@ -511,21 +541,8 @@ class _LaboratoryHubScreenState extends ConsumerState<LaboratoryHubScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   AarogyaButton(
-                    label: 'Share',
-                    variant: AarogyaButtonVariant.ghost,
-                    icon: Icons.share_rounded,
-                    size: AarogyaButtonSize.sm,
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Secure medical sharing link copied.'),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  AarogyaButton(
                     label: 'Print / PDF',
+                    variant: AarogyaButtonVariant.ghost,
                     icon: Icons.print_rounded,
                     size: AarogyaButtonSize.sm,
                     onPressed: () =>
@@ -533,6 +550,23 @@ class _LaboratoryHubScreenState extends ConsumerState<LaboratoryHubScreen> {
                           context,
                           report,
                         ),
+                  ),
+                  const SizedBox(width: 8),
+                  AarogyaButton(
+                    label: 'Share with doctor',
+                    icon: Icons.share_rounded,
+                    size: AarogyaButtonSize.sm,
+                    onPressed: () {
+                      final token = 'share-${report.id.hashCode.abs().toRadixString(36)}';
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Temporary secure link generated: https://aarogya.health/records/$token (valid 72 hrs)',
+                          ),
+                          backgroundColor: AarogyaColors.primaryCyan,
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),

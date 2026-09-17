@@ -7,6 +7,7 @@ import '../../core/design_system/tokens/spacing.dart';
 import '../../core/design_system/tokens/typography.dart';
 import '../../core/design_system/components/aarogya_avatar.dart';
 import '../../core/design_system/components/aarogya_badge.dart';
+import '../../core/design_system/components/offline_status_banner.dart';
 import '../../core/utils/responsive.dart';
 import '../../shared/domain/models/user_role.dart';
 import '../../shared/state/aarogya_providers.dart';
@@ -232,6 +233,9 @@ class AdaptiveShell extends ConsumerWidget {
             children: [
               // Top Header
               _buildTopHeader(context, ref, user, role, isDark),
+
+              // Non-blocking Connectivity / Cache Banner
+              const OfflineStatusBanner(),
 
               // Body Content + Sidebar or BottomNav
               Expanded(
