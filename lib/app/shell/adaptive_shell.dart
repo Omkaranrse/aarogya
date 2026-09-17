@@ -6,7 +6,6 @@ import '../../core/design_system/tokens/colors.dart';
 import '../../core/design_system/tokens/radius.dart';
 import '../../core/design_system/tokens/spacing.dart';
 import '../../core/design_system/tokens/typography.dart';
-import '../../core/design_system/components/aarogya_avatar.dart';
 import '../../core/design_system/components/aarogya_badge.dart';
 import '../../core/design_system/components/offline_status_banner.dart';
 import '../../core/utils/responsive.dart';
@@ -431,23 +430,6 @@ class AdaptiveShell extends ConsumerWidget {
                 SizedBox(width: isMobile ? 4 : AarogyaSpacing.md),
               ],
 
-              // Theme Toggle Button
-              IconButton(
-                visualDensity: isMobile ? VisualDensity.compact : VisualDensity.standard,
-                padding: EdgeInsets.zero,
-                constraints: isMobile ? const BoxConstraints(minWidth: 32, minHeight: 32) : null,
-                tooltip: 'Toggle Theme',
-                icon: Icon(
-                  isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-                  size: isMobile ? 18 : 20,
-                  color: isDark ? Colors.amber : AarogyaColors.accentIndigo,
-                ),
-                onPressed: () {
-                  ref.read(themeModeProvider.notifier).state =
-                      isDark ? ThemeMode.light : ThemeMode.dark;
-                },
-              ),
-
               // Notifications Drawer Trigger
               Stack(
                 alignment: Alignment.center,
@@ -525,34 +507,6 @@ class AdaptiveShell extends ConsumerWidget {
                   await ref.read(authServiceProvider).signOut();
                 },
               ),
-
-              // User Profile Pill (Desktop only)
-              if (Responsive.isDesktop(context)) ...[
-                const SizedBox(width: AarogyaSpacing.sm),
-                AarogyaAvatar(
-                  name: user.name,
-                  imageUrl: user.avatarUrl,
-                  size: 38,
-                  isOnline: true,
-                ),
-                const SizedBox(width: AarogyaSpacing.sm),
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      user.name,
-                      style: AarogyaTypography.label(
-                        isDark ? AarogyaColors.textDarkPrimary : AarogyaColors.textLightPrimary,
-                      ),
-                    ),
-                    Text(
-                      role.displayName,
-                      style: AarogyaTypography.caption(AarogyaColors.primaryCyan),
-                    ),
-                  ],
-                ),
-              ],
             ],
           ),
         ),
