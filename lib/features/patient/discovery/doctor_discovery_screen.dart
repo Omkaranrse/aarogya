@@ -90,16 +90,24 @@ class _DoctorDiscoveryScreenState extends ConsumerState<DoctorDiscoveryScreen> {
       return true;
     }).toList();
 
+    final isMobile = Responsive.isMobile(context);
+
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: Responsive.isMobile(context) ? 12 : 24,
-          vertical: Responsive.isMobile(context) ? 12 : 16,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: isMobile ? double.infinity : 1320,
+          ),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: isMobile ? 12 : 24,
+              vertical: isMobile ? 12 : 16,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
             // Screen Title & Search Header
             Text(
               'Find Specialists',
@@ -322,7 +330,9 @@ class _DoctorDiscoveryScreenState extends ConsumerState<DoctorDiscoveryScreen> {
           ],
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 
   Widget _buildSecondaryChip({
@@ -458,51 +468,48 @@ class _DoctorDiscoveryScreenState extends ConsumerState<DoctorDiscoveryScreen> {
                         color: colors.neutrals.gray900,
                       ),
                     ),
-                    Text(
-                      ' (${doctor.reviewsCount})',
-                      style: typography.caption.copyWith(
-                        fontSize: 10,
-                        color: colors.neutrals.gray500,
-                      ),
-                    ),
                   ],
                 ),
 
                 // Slot 2: Experience
                 Text(
-                  '${doctor.experienceYears} yrs exp',
+                  '${doctor.experienceYears}y exp',
                   style: typography.caption.copyWith(
-                    fontSize: 11,
+                    fontSize: 10.5,
                     color: colors.neutrals.gray600,
                   ),
                 ),
 
                 // Slot 3: Time-based availability chip
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: doctor.isAvailableToday
-                        ? colors.clinicalStableSubtle
-                        : colors.neutrals.gray100,
-                    borderRadius: AarogyaRadius.radius4,
-                    border: Border.all(
-                      color: doctor.isAvailableToday
-                          ? colors.clinicalStable.withValues(alpha: 0.3)
-                          : colors.borderHairline,
-                      width: 0.8,
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
                     ),
-                  ),
-                  child: Text(
-                    nextSlotText,
-                    style: typography.caption.copyWith(
+                    decoration: BoxDecoration(
                       color: doctor.isAvailableToday
-                          ? colors.clinicalStable
-                          : colors.neutrals.gray600,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 9.5,
+                          ? colors.clinicalStableSubtle
+                          : colors.neutrals.gray100,
+                      borderRadius: AarogyaRadius.radius4,
+                      border: Border.all(
+                        color: doctor.isAvailableToday
+                            ? colors.clinicalStable.withValues(alpha: 0.3)
+                            : colors.borderHairline,
+                        width: 0.8,
+                      ),
+                    ),
+                    child: Text(
+                      nextSlotText,
+                      style: typography.caption.copyWith(
+                        color: doctor.isAvailableToday
+                            ? colors.clinicalStable
+                            : colors.neutrals.gray600,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 9.5,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ),

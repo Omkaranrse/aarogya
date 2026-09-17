@@ -31,23 +31,31 @@ class PrescriptionsHubScreen extends ConsumerWidget {
 
     final activeRxCount = prescriptions.where((p) => p.hasActiveMedications()).length;
 
+    final isMobile = Responsive.isMobile(context);
+
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: Responsive.isMobile(context) ? 12 : 24,
-          vertical: Responsive.isMobile(context) ? 12 : 16,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ContextualHeader(
-              title: 'Prescriptions',
-              subtitle: 'Digital medical slips & authorized pharmacy directives',
-              statusLabel: '$activeRxCount Active Rx',
-              statusColor: const Color(0xFF8B5CF6),
+      body: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: isMobile ? double.infinity : 1320,
+          ),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: isMobile ? 12 : 24,
+              vertical: isMobile ? 12 : 16,
             ),
-            const SizedBox(height: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ContextualHeader(
+                  title: 'Prescriptions',
+                  subtitle: 'Digital medical slips & authorized pharmacy directives',
+                  statusLabel: '$activeRxCount Active Rx',
+                  statusColor: const Color(0xFF8B5CF6),
+                ),
+                const SizedBox(height: 8),
 
             Expanded(
               child: prescriptions.isEmpty
@@ -146,7 +154,9 @@ class PrescriptionsHubScreen extends ConsumerWidget {
           ],
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 
   Widget _buildPrescriptionSlip(

@@ -75,16 +75,24 @@ class _PatientAppointmentsScreenState
     final completedCount = appointments.where((a) => a.status == AppointmentStatus.completed).length;
     final cancelledCount = appointments.where((a) => a.status == AppointmentStatus.cancelled).length;
 
+    final isMobile = Responsive.isMobile(context);
+
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: Responsive.isMobile(context) ? 12 : 24,
-          vertical: Responsive.isMobile(context) ? 12 : 16,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: isMobile ? double.infinity : 1320,
+          ),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: isMobile ? 12 : 24,
+              vertical: isMobile ? 12 : 16,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
             ContextualHeader(
               title: 'My Consultations',
               subtitle: 'Track upcoming appointments and clinical schedules',
@@ -186,7 +194,9 @@ class _PatientAppointmentsScreenState
           ],
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 
   Widget _buildTab(String label, int index, int count, bool isDark) {

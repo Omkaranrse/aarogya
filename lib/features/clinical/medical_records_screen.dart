@@ -41,16 +41,24 @@ class _MedicalRecordsScreenState extends ConsumerState<MedicalRecordsScreen> {
         ? records
         : records.where((r) => r.type == _selectedFilter).toList();
 
+    final isMobile = Responsive.isMobile(context);
+
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: Responsive.isMobile(context) ? 12 : 24,
-          vertical: Responsive.isMobile(context) ? 12 : 16,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: isMobile ? double.infinity : 1320,
+          ),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: isMobile ? 12 : 24,
+              vertical: isMobile ? 12 : 16,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
             ContextualHeader(
               title: 'Timeline & Health Records',
               subtitle: 'Unified chronological history of consultations & findings',
@@ -124,7 +132,9 @@ class _MedicalRecordsScreenState extends ConsumerState<MedicalRecordsScreen> {
           ],
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 
   Widget _buildFilterChip(

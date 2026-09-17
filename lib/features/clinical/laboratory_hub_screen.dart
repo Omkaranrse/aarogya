@@ -50,16 +50,24 @@ class _LaboratoryHubScreenState extends ConsumerState<LaboratoryHubScreen> {
 
     final abnormalCount = labReports.where((r) => r.hasAbnormalResults).length;
 
+    final isMobile = Responsive.isMobile(context);
+
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: Responsive.isMobile(context) ? 12 : 24,
-          vertical: Responsive.isMobile(context) ? 12 : 16,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: isMobile ? double.infinity : 1320,
+          ),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: isMobile ? 12 : 24,
+              vertical: isMobile ? 12 : 16,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
             ContextualHeader(
               title: 'Laboratory Reports',
               subtitle: 'Verified diagnostic panels & pathological findings',
@@ -243,7 +251,9 @@ class _LaboratoryHubScreenState extends ConsumerState<LaboratoryHubScreen> {
           ],
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 
   Widget _buildReportCard(
