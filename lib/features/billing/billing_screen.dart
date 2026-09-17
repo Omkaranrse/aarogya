@@ -39,13 +39,14 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
         ? AarogyaColors.textDarkSecondary
         : AarogyaColors.textLightSecondary;
 
-    final pendingTotal = invoices
+    // Derived strictly by folding over invoices in integer paise (P0.2)
+    final pendingTotalPaise = invoices
         .where((inv) => inv.status == InvoiceStatus.pending)
-        .fold(0.0, (acc, inv) => acc + inv.totalAmount);
+        .fold<int>(0, (acc, inv) => acc + inv.balanceDuePaise);
 
-    final paidTotal = invoices
+    final paidTotalPaise = invoices
         .where((inv) => inv.status == InvoiceStatus.paid)
-        .fold(0.0, (acc, inv) => acc + inv.totalAmount);
+        .fold<int>(0, (acc, inv) => acc + inv.amountPaidPaise);
 
     final filtered = _selectedFilter == 1
         ? invoices.where((i) => i.status == InvoiceStatus.pending).toList()
@@ -64,8 +65,8 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ContextualHeader(
-              title: 'Invoices & Billing',
-              subtitle: 'Clinical charges, diagnostic fees & payment receipts',
+              title: 'Billing & Invoices',
+              subtitle: 'Clinical charges, diagnostic fees & verified payment receipts',
               statusLabel:
                   '${invoices.where((i) => i.status == InvoiceStatus.pending).length} Pending • ${invoices.where((i) => i.status == InvoiceStatus.paid).length} Settled',
               statusColor:
@@ -75,14 +76,14 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
             ),
             const SizedBox(height: 8),
 
-            // Financial KPIs
+            // Financial KPIs derived by folding over invoices
             Row(
               children: [
                 Expanded(
                   child: StatCard(
                     title: 'Pending Dues',
-                    value: AarogyaFormatters.currency(pendingTotal),
-                    subtitle: 'Due at clinic',
+                    value: AarogyaFormatters.currencyPaise(pendingTotalPaise),
+                    subtitle: 'Due at hospital cashier / UPI',
                     icon: Icons.pending_actions_rounded,
                     accentColor: AarogyaColors.warning,
                   ),
@@ -91,8 +92,8 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
                 Expanded(
                   child: StatCard(
                     title: 'Total Settled',
-                    value: AarogyaFormatters.currency(paidTotal),
-                    subtitle: 'Settled',
+                    value: AarogyaFormatters.currencyPaise(paidTotalPaise),
+                    subtitle: 'Settled to date',
                     icon: Icons.check_circle_outline_rounded,
                     accentColor: AarogyaColors.success,
                     isIncreasePositive: true,
@@ -218,7 +219,7 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
       iconColor: isPaid ? colors.clinicalStable : colors.clinicalWarning,
       isLast: isLast,
       title: '#${invoice.invoiceNumber}',
-      subtitle: AarogyaFormatters.date(invoice.date),
+      subtitle: '${AarogyaFormatters.date(invoice.date)}${invoice.gstin != null ? ' • GSTIN: ${invoice.gstin}' : ''}',
       statusBadge: Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
@@ -243,6 +244,7 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Line items
           ...invoice.items.map((item) {
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 2.5),
@@ -251,14 +253,17 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
                 children: [
                   Expanded(
                     child: Text(
-                      item.description,
+                      item.quantity > 1
+                          ? '${item.description} (x${item.quantity})'
+                          : item.description,
                       style: typography.body.copyWith(
                         color: colors.neutrals.gray800,
                       ),
                     ),
                   ),
+                  const SizedBox(width: 8),
                   Text(
-                    AarogyaFormatters.currency(item.total),
+                    AarogyaFormatters.currencyPaise(item.totalPaise),
                     style: typography.body.copyWith(
                       fontWeight: FontWeight.w600,
                       fontFeatures: const [FontFeature.tabularFigures()],
@@ -269,40 +274,106 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
               ),
             );
           }),
-          const SizedBox(height: 8),
+
+          const SizedBox(height: 6),
           Divider(
             color: colors.borderHairline,
             height: 1,
             thickness: 1,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
+
+          // Subtotal
+          _buildSummaryRow(
+            'Subtotal',
+            AarogyaFormatters.currencyPaise(invoice.subtotalPaise),
+            typography,
+            colors.neutrals.gray600,
+          ),
+
+          // Discount (if any)
+          if (invoice.discountPaise > 0)
+            _buildSummaryRow(
+              'Discount',
+              '- ${AarogyaFormatters.currencyPaise(invoice.discountPaise)}',
+              typography,
+              colors.clinicalStable,
+            ),
+
+          // Taxes rows
+          ...invoice.taxes.map(
+            (tax) => _buildSummaryRow(
+              tax.label,
+              AarogyaFormatters.currencyPaise(tax.amountPaise),
+              typography,
+              colors.neutrals.gray600,
+            ),
+          ),
+
+          // Rounding (if any)
+          if (invoice.roundingPaise != 0)
+            _buildSummaryRow(
+              'Rounding',
+              AarogyaFormatters.currencyPaise(invoice.roundingPaise),
+              typography,
+              colors.neutrals.gray600,
+            ),
+
+          const SizedBox(height: 4),
+          Divider(
+            color: colors.borderHairline,
+            height: 1,
+            thickness: 1,
+          ),
+          const SizedBox(height: 6),
+
+          // Total Billed (Emphasised)
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 'TOTAL BILLED',
                 style: typography.caption.copyWith(
-                  fontSize: 10,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
                   letterSpacing: 0.6,
-                  color: colors.neutrals.gray500,
+                  color: colors.neutrals.gray800,
                 ),
               ),
               Text(
-                AarogyaFormatters.currency(invoice.totalAmount),
+                AarogyaFormatters.currencyPaise(invoice.totalPaise),
                 style: typography.subtitle.copyWith(
                   fontFeatures: const [FontFeature.tabularFigures()],
                   fontWeight: FontWeight.w800,
-                  color: isPaid ? colors.clinicalStable : colors.clinicalWarning,
+                  color: colors.neutrals.gray900,
                 ),
               ),
             ],
+          ),
+
+          // Amount Paid & Balance Due
+          const SizedBox(height: 4),
+          _buildSummaryRow(
+            'Amount Paid',
+            AarogyaFormatters.currencyPaise(invoice.amountPaidPaise),
+            typography,
+            colors.clinicalStable,
+          ),
+          _buildSummaryRow(
+            'Balance Due',
+            AarogyaFormatters.currencyPaise(invoice.balanceDuePaise),
+            typography,
+            invoice.balanceDuePaise > 0
+                ? colors.clinicalWarning
+                : colors.neutrals.gray500,
+            isBold: true,
           ),
         ],
       ),
       actions: [
         if (!isPaid)
           AarogyaButton(
-            label: 'Pay Now',
+            label: 'Pay Now (${AarogyaFormatters.currencyPaise(invoice.balanceDuePaise)})',
             icon: Icons.credit_card_rounded,
             variant: AarogyaButtonVariant.primary,
             size: AarogyaButtonSize.sm,
@@ -326,6 +397,38 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
             },
           ),
       ],
+    );
+  }
+
+  Widget _buildSummaryRow(
+    String label,
+    String value,
+    AarogyaTypographyTokens typography,
+    Color color, {
+    bool isBold = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 1.5),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: typography.caption.copyWith(
+              color: color,
+              fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
+            ),
+          ),
+          Text(
+            value,
+            style: typography.caption.copyWith(
+              color: color,
+              fontFeatures: const [FontFeature.tabularFigures()],
+              fontWeight: isBold ? FontWeight.w700 : FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

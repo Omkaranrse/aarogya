@@ -79,7 +79,7 @@ class InvoiceReceiptDialog extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'AAROGYA MEDICAL OS',
+                            'AAROGYA CLINICAL OS',
                             style: AarogyaTypography.title(primaryText)
                                 .copyWith(
                                   letterSpacing: 1.2,
@@ -91,14 +91,14 @@ class InvoiceReceiptDialog extends StatelessWidget {
                             style: AarogyaTypography.caption(secondaryText),
                           ),
                           Text(
-                            'GSTIN: 27AABCA1234F1Z5 • OPD Billing Desk',
+                            'GSTIN: ${invoice.gstin ?? "27AARCG0001Z5Z1"} • OPD Billing Desk',
                             style: AarogyaTypography.caption(secondaryText),
                           ),
                         ],
                       ),
                     ),
                     AarogyaBadge(
-                      label: isPaid ? 'PAID' : 'DUE',
+                      label: isPaid ? 'SETTLED' : 'PENDING',
                       variant: isPaid
                           ? AarogyaBadgeVariant.success
                           : AarogyaBadgeVariant.warning,
@@ -135,7 +135,7 @@ class InvoiceReceiptDialog extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          'TAX RECEIPT',
+                          'TAX INVOICE',
                           style: AarogyaTypography.caption(secondaryText)
                               .copyWith(fontWeight: FontWeight.w700),
                         ),
@@ -227,10 +227,13 @@ class InvoiceReceiptDialog extends StatelessWidget {
                         ),
                         Expanded(
                           child: Text(
-                            AarogyaFormatters.currency(item.total),
+                            AarogyaFormatters.currencyPaise(item.totalPaise),
                             textAlign: TextAlign.right,
                             style: AarogyaTypography.bodyMedium(primaryText)
-                                .copyWith(fontWeight: FontWeight.w600),
+                                .copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  fontFeatures: const [FontFeature.tabularFigures()],
+                                ),
                           ),
                         ),
                       ],
@@ -243,39 +246,66 @@ class InvoiceReceiptDialog extends StatelessWidget {
                 // Calculation Summary
                 _buildSummaryRow(
                   'Subtotal',
-                  AarogyaFormatters.currency(invoice.subtotal),
+                  AarogyaFormatters.currencyPaise(invoice.subtotalPaise),
                   primaryText,
                   secondaryText,
                 ),
-                _buildSummaryRow(
-                  'Healthcare Tax (Exempt)',
-                  '₹0.00',
-                  primaryText,
-                  secondaryText,
-                ),
-                if (invoice.discount > 0)
+                if (invoice.discountPaise > 0)
                   _buildSummaryRow(
                     'Discount Applied',
-                    '-${AarogyaFormatters.currency(invoice.discount)}',
+                    '- ${AarogyaFormatters.currencyPaise(invoice.discountPaise)}',
                     AarogyaColors.success,
                     secondaryText,
                   ),
+                ...invoice.taxes.map(
+                  (tax) => _buildSummaryRow(
+                    tax.label,
+                    AarogyaFormatters.currencyPaise(tax.amountPaise),
+                    primaryText,
+                    secondaryText,
+                  ),
+                ),
+                if (invoice.roundingPaise != 0)
+                  _buildSummaryRow(
+                    'Rounding',
+                    AarogyaFormatters.currencyPaise(invoice.roundingPaise),
+                    primaryText,
+                    secondaryText,
+                  ),
+
                 const SizedBox(height: 6),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Total Paid',
+                      'TOTAL BILLED',
                       style: AarogyaTypography.title(primaryText)
                           .copyWith(fontWeight: FontWeight.w800),
                     ),
                     Text(
-                      AarogyaFormatters.currency(invoice.totalAmount),
+                      AarogyaFormatters.currencyPaise(invoice.totalPaise),
                       style: AarogyaTypography.headingLarge(
-                        AarogyaColors.success,
+                        isPaid ? AarogyaColors.success : AarogyaColors.warning,
+                      ).copyWith(
+                        fontFeatures: const [FontFeature.tabularFigures()],
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 4),
+                _buildSummaryRow(
+                  'Amount Paid',
+                  AarogyaFormatters.currencyPaise(invoice.amountPaidPaise),
+                  AarogyaColors.success,
+                  secondaryText,
+                ),
+                _buildSummaryRow(
+                  'Balance Due',
+                  AarogyaFormatters.currencyPaise(invoice.balanceDuePaise),
+                  invoice.balanceDuePaise > 0
+                      ? AarogyaColors.warning
+                      : secondaryText,
+                  secondaryText,
                 ),
 
                 const SizedBox(height: 18),
@@ -315,8 +345,8 @@ class InvoiceReceiptDialog extends StatelessWidget {
                             ),
                             Text(
                               isPaid
-                                  ? 'Method: ${invoice.paymentMethod ?? "Digital Payment"} • Auth: TXN-89410'
-                                  : 'Due on admission / OPD desk',
+                                  ? 'Method: ${invoice.paymentMethod ?? "Digital Payment"}'
+                                  : 'Due at hospital cashier / UPI',
                               style: AarogyaTypography.caption(secondaryText),
                             ),
                           ],
@@ -341,7 +371,7 @@ class InvoiceReceiptDialog extends StatelessWidget {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                'Tax Invoice #${invoice.invoiceNumber} saved to device.',
+                                'Tax Invoice #${invoice.invoiceNumber} receipt downloaded.',
                               ),
                               backgroundColor: AarogyaColors.success,
                             ),
@@ -378,7 +408,12 @@ class InvoiceReceiptDialog extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: AarogyaTypography.bodyMedium(labelColor)),
-          Text(value, style: AarogyaTypography.bodyMedium(valueColor)),
+          Text(
+            value,
+            style: AarogyaTypography.bodyMedium(valueColor).copyWith(
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
         ],
       ),
     );

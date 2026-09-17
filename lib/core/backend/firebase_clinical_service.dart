@@ -227,7 +227,8 @@ class FirebaseClinicalService {
                       ),
                       tokenNumber:
                           (data[FirestoreFields.tokenNumber] as num?)?.toInt() ?? 1,
-                      fee: (data[FirestoreFields.fee] as num?)?.toDouble() ?? 500.0,
+                      feePaise: (data['fee_paise'] as num?)?.toInt() ??
+                          (((data[FirestoreFields.fee] as num?)?.toDouble() ?? 500.0) * 100).round(),
                       symptoms: data['symptoms'] as String?,
                       notes: data['notes'] as String?,
                     ),
@@ -406,15 +407,29 @@ class FirebaseClinicalService {
                   final itemsRaw = data['items'] as List<dynamic>? ?? [];
                   final items = itemsRaw.map((it) {
                     final iMap = it as Map<String, dynamic>;
+                    final unitPricePaise = (iMap['unit_price_paise'] as num?)?.toInt() ??
+                        (((iMap['unit_price'] as num?)?.toDouble() ?? 500.0) * 100).round();
+                    final totalPaise = (iMap['total_paise'] as num?)?.toInt() ??
+                        (((iMap['total'] as num?)?.toDouble() ?? 500.0) * 100).round();
                     return InvoiceLineItem(
                       description:
                           iMap['description'] as String? ?? 'Clinical Service',
                       quantity: (iMap['quantity'] as num?)?.toInt() ?? 1,
-                      unitPrice:
-                          (iMap['unit_price'] as num?)?.toDouble() ?? 500.0,
-                      total: (iMap['total'] as num?)?.toDouble() ?? 500.0,
+                      unitPricePaise: unitPricePaise,
+                      totalPaise: totalPaise,
                     );
                   }).toList();
+
+                  final subtotalPaise = (data['subtotal_paise'] as num?)?.toInt() ??
+                      (((data['subtotal'] as num?)?.toDouble() ?? 500.0) * 100).round();
+                  final discountPaise = (data['discount_paise'] as num?)?.toInt() ??
+                      (((data['discount'] as num?)?.toDouble() ?? 0.0) * 100).round();
+                  final taxPaise = (((data['tax'] as num?)?.toDouble() ?? 25.0) * 100).round();
+                  final taxes = [
+                    InvoiceTaxItem(label: 'GST (5%)', ratePercent: 5.0, amountPaise: taxPaise),
+                  ];
+                  final totalPaise = (data['total_paise'] as num?)?.toInt() ??
+                      (subtotalPaise - discountPaise + taxPaise);
 
                   invoices.add(
                     Invoice(
@@ -431,11 +446,13 @@ class FirebaseClinicalService {
                           ? (data['due_date'] as Timestamp).toDate()
                           : DateTime.now().add(const Duration(days: 3)),
                       items: items,
-                      subtotal: (data['subtotal'] as num?)?.toDouble() ?? 500.0,
-                      tax: (data['tax'] as num?)?.toDouble() ?? 25.0,
-                      discount: (data['discount'] as num?)?.toDouble() ?? 0.0,
-                      totalAmount:
-                          (data['total_amount'] as num?)?.toDouble() ?? 525.0,
+                      subtotalPaise: subtotalPaise,
+                      discountPaise: discountPaise,
+                      taxes: taxes,
+                      roundingPaise: 0,
+                      totalPaise: totalPaise,
+                      amountPaidPaise: data['status'] == 'paid' ? totalPaise : 0,
+                      balanceDuePaise: data['status'] == 'paid' ? 0 : totalPaise,
                       status: InvoiceStatus.values.firstWhere(
                         (s) =>
                             s.name ==
@@ -489,7 +506,7 @@ class FirebaseClinicalService {
                             (data['type'] as String? ?? 'consultation'),
                         orElse: () => MedicalRecordType.consultation,
                       ),
-                      date: (data['date'] is Timestamp)
+                      occurredAt: (data['date'] is Timestamp)
                           ? (data['date'] as Timestamp).toDate()
                           : DateTime.now(),
                       doctorName:

@@ -51,24 +51,25 @@ class _MedicalRecordsScreenState extends ConsumerState<MedicalRecordsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ContextualHeader(
-              title: 'Health Timeline & EHR Records',
+              title: 'Timeline & Health Records',
               subtitle: 'Unified chronological history of consultations & findings',
               statusLabel: '${records.length} Records',
               statusColor: context.aarogyaColors.primary,
             ),
             const SizedBox(height: 8),
 
-            // Filter Chips
+            // Filter Chips with item count
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  _buildFilterChip('All Records', _selectedFilter == null, () {
+                  _buildFilterChip('All (${records.length})', _selectedFilter == null, () {
                     setState(() => _selectedFilter = null);
                   }, isDark),
                   ...MedicalRecordType.values.map((type) {
                     final isSelected = _selectedFilter == type;
-                    return _buildFilterChip(type.displayName, isSelected, () {
+                    final count = records.where((r) => r.type == type).length;
+                    return _buildFilterChip('${type.displayName} ($count)', isSelected, () {
                       setState(() => _selectedFilter = type);
                     }, isDark);
                   }),
@@ -181,6 +182,11 @@ class _MedicalRecordsScreenState extends ConsumerState<MedicalRecordsScreen> {
       case MedicalRecordType.dischargeSummary:
         icon = Icons.assignment_turned_in_rounded;
         accentColor = colors.clinicalStable;
+        break;
+      case MedicalRecordType.advisedDiagnostic:
+        icon = Icons.pending_actions_rounded;
+        accentColor = colors.clinicalWarning;
+        break;
     }
 
     return TimelineEntryCard(
@@ -189,7 +195,7 @@ class _MedicalRecordsScreenState extends ConsumerState<MedicalRecordsScreen> {
       isLast: isLast,
       title: record.title,
       subtitle: '${record.doctorName} • ${record.department}',
-      timestamp: AarogyaFormatters.date(record.date),
+      timestamp: AarogyaFormatters.date(record.occurredAt),
       statusBadge: Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(

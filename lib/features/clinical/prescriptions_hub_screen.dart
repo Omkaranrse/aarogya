@@ -29,6 +29,8 @@ class PrescriptionsHubScreen extends ConsumerWidget {
         ? AarogyaColors.textDarkSecondary
         : AarogyaColors.textLightSecondary;
 
+    final activeRxCount = prescriptions.where((p) => p.hasActiveMedications()).length;
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Padding(
@@ -42,7 +44,7 @@ class PrescriptionsHubScreen extends ConsumerWidget {
             ContextualHeader(
               title: 'Prescriptions',
               subtitle: 'Digital medical slips & authorized pharmacy directives',
-              statusLabel: '${prescriptions.length} Active Rx',
+              statusLabel: '$activeRxCount Active Rx',
               statusColor: const Color(0xFF8B5CF6),
             ),
             const SizedBox(height: 8),
@@ -51,7 +53,7 @@ class PrescriptionsHubScreen extends ConsumerWidget {
               child: prescriptions.isEmpty
                   ? const AarogyaEmptyState(
                       icon: Icons.medication_outlined,
-                      title: 'No Prescriptions Yet',
+                      title: 'No Prescriptions Found',
                       description:
                           'Your signed prescriptions will appear here immediately after consultations.',
                     )
@@ -158,33 +160,40 @@ class PrescriptionsHubScreen extends ConsumerWidget {
     final colors = context.aarogyaColors;
     final typography = context.aarogyaTypography;
     const rxAccent = Color(0xFF8B5CF6);
+    final isActiveRx = rx.hasActiveMedications();
 
     return TimelineEntryCard(
       icon: Icons.medication_rounded,
       iconColor: rxAccent,
       isLast: isLast,
       title: '℞ #${rx.id.toUpperCase()}',
-      subtitle: '${rx.doctorName} • ${rx.doctorSpecialty}',
+      subtitle: '${rx.doctorName} • ${rx.department}',
       timestamp: AarogyaFormatters.date(rx.date),
       statusBadge: Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
-          color: rxAccent.withValues(alpha: 0.12),
+          color: (isActiveRx ? rxAccent : colors.neutrals.gray400)
+              .withValues(alpha: 0.12),
           borderRadius: AarogyaRadius.radius4,
           border: Border.all(
-            color: rxAccent.withValues(alpha: 0.28),
+            color: (isActiveRx ? rxAccent : colors.neutrals.gray400)
+                .withValues(alpha: 0.28),
             width: 0.8,
           ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.verified_rounded, size: 10, color: rxAccent),
+            Icon(
+              isActiveRx ? Icons.check_circle_rounded : Icons.history_rounded,
+              size: 10,
+              color: isActiveRx ? rxAccent : colors.neutrals.gray500,
+            ),
             const SizedBox(width: 3),
             Text(
-              'Patient: ${rx.patientName}',
+              isActiveRx ? 'Active Course' : 'Completed Course',
               style: typography.caption.copyWith(
-                color: rxAccent,
+                color: isActiveRx ? rxAccent : colors.neutrals.gray600,
                 fontWeight: FontWeight.w700,
                 fontSize: 9.5,
               ),
@@ -196,120 +205,133 @@ class PrescriptionsHubScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ...rx.medications.map((med) {
-            return Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: colors.surfaceActionable,
-                borderRadius: AarogyaRadius.radius12,
-                border: Border.all(
-                  color: colors.borderHairline,
-                  width: 0.9,
+            final medStatus = med.getStatus();
+            final isMedActive = medStatus == MedicationStatus.active;
+            final isCompleted = medStatus == MedicationStatus.completed;
+
+            return Opacity(
+              opacity: isCompleted ? 0.65 : 1.0,
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isCompleted
+                      ? colors.neutrals.gray50
+                      : colors.surfaceActionable,
+                  borderRadius: AarogyaRadius.radius12,
+                  border: Border.all(
+                    color: isCompleted
+                        ? colors.borderHairline.withValues(alpha: 0.5)
+                        : colors.borderHairline,
+                    width: 0.9,
+                  ),
                 ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(7),
-                        decoration: BoxDecoration(
-                          color: rxAccent.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: rxAccent.withValues(alpha: 0.25),
-                            width: 0.8,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(7),
+                          decoration: BoxDecoration(
+                            color: (isMedActive ? rxAccent : colors.neutrals.gray400)
+                                .withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: (isMedActive ? rxAccent : colors.neutrals.gray400)
+                                  .withValues(alpha: 0.25),
+                              width: 0.8,
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.medication_liquid_rounded,
+                            size: 18,
+                            color: isMedActive ? rxAccent : colors.neutrals.gray600,
                           ),
                         ),
-                        child: const Icon(
-                          Icons.medication_liquid_rounded,
-                          size: 18,
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                med.name,
+                                style: typography.subtitle.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: colors.neutrals.gray900,
+                                  decoration: isCompleted
+                                      ? TextDecoration.none
+                                      : null,
+                                ),
+                              ),
+                              Text(
+                                'Strength: ${med.dosage}',
+                                style: typography.caption.copyWith(
+                                  color: colors.neutrals.gray500,
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isMedActive
+                                ? rxAccent.withValues(alpha: 0.12)
+                                : colors.neutrals.gray100,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: isMedActive
+                                  ? rxAccent.withValues(alpha: 0.25)
+                                  : colors.borderHairline,
+                              width: 0.8,
+                            ),
+                          ),
+                          child: Text(
+                            med.progressLabel(),
+                            style: typography.caption.copyWith(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              color: isMedActive
+                                  ? rxAccent
+                                  : colors.neutrals.gray600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Indian 1-0-1 Triplet Dosage Chips
+                    _buildIntakeChips(med.frequency, colors, typography),
+                    const SizedBox(height: 8),
+
+                    // Instruction & Date details
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.restaurant_outlined,
+                          size: 12,
                           color: rxAccent,
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              med.name,
-                              style: typography.subtitle.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: colors.neutrals.gray900,
-                              ),
-                            ),
-                            Text(
-                              'Strength: ${med.dosage}',
-                              style: typography.caption.copyWith(
-                                color: colors.neutrals.gray500,
-                                fontWeight: FontWeight.w500,
-                                fontSize: 11,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: colors.neutrals.gray100,
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(
-                            color: colors.borderHairline,
-                            width: 0.8,
-                          ),
-                        ),
-                        child: Text(
-                          med.duration,
-                          style: typography.caption.copyWith(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w700,
-                            color: colors.neutrals.gray700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  // Patient-Friendly Visual Intake Timing Chips
-                  _buildIntakeChips(med.frequency, colors, typography),
-                  const SizedBox(height: 8),
-                  // Instruction & Date details
-                  Builder(
-                    builder: (context) {
-                      final startDate = med.startDate ?? rx.date;
-                      final durationMatch =
-                          RegExp(r'\d+').firstMatch(med.duration);
-                      final durationDays = durationMatch != null
-                          ? int.tryParse(durationMatch.group(0)!) ?? 30
-                          : 30;
-                      final endDate = med.endDate ??
-                          startDate.add(Duration(days: durationDays));
-
-                      return Row(
-                        children: [
-                          Icon(
-                            Icons.restaurant_outlined,
-                            size: 12,
-                            color: rxAccent,
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              med.instructions,
-                              style: typography.caption.copyWith(
-                                color: colors.neutrals.gray700,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 11,
-                              ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            med.instructions,
+                            style: typography.caption.copyWith(
+                              color: colors.neutrals.gray700,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 11,
                             ),
                           ),
+                        ),
+                        if (med.startDate != null && med.endDate != null) ...[
                           Icon(
                             Icons.event_available_rounded,
                             size: 11,
@@ -317,7 +339,7 @@ class PrescriptionsHubScreen extends ConsumerWidget {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            '${AarogyaFormatters.date(startDate)} – ${AarogyaFormatters.date(endDate)}',
+                            '${AarogyaFormatters.date(med.startDate!)} – ${AarogyaFormatters.date(med.endDate!)}',
                             style: typography.caption.copyWith(
                               fontSize: 10,
                               color: colors.neutrals.gray500,
@@ -325,10 +347,10 @@ class PrescriptionsHubScreen extends ConsumerWidget {
                             ),
                           ),
                         ],
-                      );
-                    },
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
             );
           }),
@@ -366,7 +388,7 @@ class PrescriptionsHubScreen extends ConsumerWidget {
               ),
             ),
           ],
-          // Doctor's Electronic Signature Seal
+          // Prescriber's Electronic Signature Seal
           Container(
             margin: const EdgeInsets.only(top: 6),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -388,7 +410,7 @@ class PrescriptionsHubScreen extends ConsumerWidget {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    'Electronically Authorized: ${rx.doctorName} • Reg #${rx.doctorId.replaceAll(RegExp(r'[^0-9]'), '').padLeft(5, '8')}',
+                    'Electronically Authorized: ${rx.doctorSignature ?? rx.doctorName} • Department of ${rx.department}',
                     style: typography.caption.copyWith(
                       color: const Color(0xFF059669),
                       fontWeight: FontWeight.w600,
@@ -403,119 +425,58 @@ class PrescriptionsHubScreen extends ConsumerWidget {
       ),
       actions: [
         AarogyaButton(
-          label: 'Share',
-          icon: Icons.share_rounded,
-          variant: AarogyaButtonVariant.ghost,
-          size: AarogyaButtonSize.sm,
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Prescription link copied to clipboard.'),
-              ),
-            );
-          },
-        ),
-        const SizedBox(width: 8),
-        AarogyaButton(
-          label: 'Print / PDF',
+          label: 'Print Rx Slip',
           icon: Icons.print_rounded,
           variant: AarogyaButtonVariant.secondary,
           size: AarogyaButtonSize.sm,
-          onPressed: () => PrintableClinicalDocumentDialog.showPrescription(
-            context,
-            rx,
-          ),
+          onPressed: () {
+            PrintableClinicalDocumentDialog.showPrescription(
+              context,
+              rx,
+            );
+          },
         ),
       ],
     );
   }
 
-  static Widget _buildIntakeChips(
+  Widget _buildIntakeChips(
     String frequency,
     AarogyaColorTokens colors,
     AarogyaTypographyTokens typography,
   ) {
-    final match =
-        RegExp(r'(\d+)\s*-\s*(\d+)\s*-\s*(\d+)').firstMatch(frequency);
-    if (match != null) {
-      final m = int.tryParse(match.group(1)!) ?? 0;
-      final a = int.tryParse(match.group(2)!) ?? 0;
-      final n = int.tryParse(match.group(3)!) ?? 0;
+    final parts = frequency.split(RegExp(r'[-\s]+'));
+    final m = parts.isNotEmpty && parts[0] == '1';
+    final a = parts.length > 1 && parts[1] == '1';
+    final n = parts.length > 2 && parts[2] == '1';
 
-      return Wrap(
-        spacing: 6,
-        runSpacing: 4,
-        children: [
-          _pillTimingChip(
-            icon: Icons.wb_sunny_rounded,
-            timeOfDay: 'Morning',
-            count: m,
-            activeColor: const Color(0xFFF59E0B),
-            colors: colors,
-          ),
-          _pillTimingChip(
-            icon: Icons.wb_cloudy_rounded,
-            timeOfDay: 'Afternoon',
-            count: a,
-            activeColor: const Color(0xFF06B6D4),
-            colors: colors,
-          ),
-          _pillTimingChip(
-            icon: Icons.nightlight_round,
-            timeOfDay: 'Night',
-            count: n,
-            activeColor: const Color(0xFF6366F1),
-            colors: colors,
-          ),
-        ],
-      );
-    }
-
-    final isSOS = frequency.toLowerCase().contains('prn') ||
-        frequency.toLowerCase().contains('needed') ||
-        frequency.toLowerCase().contains('sos');
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
-      decoration: BoxDecoration(
-        color: (isSOS ? AarogyaColors.warning : const Color(0xFF8B5CF6))
-            .withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(
-          color: (isSOS ? AarogyaColors.warning : const Color(0xFF8B5CF6))
-              .withValues(alpha: 0.3),
-          width: 0.8,
-        ),
-      ),
-      child: Text(
-        frequency,
-        style: typography.caption.copyWith(
-          color: isSOS ? AarogyaColors.warning : const Color(0xFF8B5CF6),
-          fontWeight: FontWeight.w600,
-          fontSize: 11,
-        ),
-      ),
+    return Wrap(
+      spacing: 6,
+      runSpacing: 4,
+      children: [
+        _buildSlotChip('Morning (1)', m, colors, typography),
+        _buildSlotChip('Afternoon (0)', a, colors, typography),
+        _buildSlotChip('Night (1)', n, colors, typography),
+      ],
     );
   }
 
-  static Widget _pillTimingChip({
-    required IconData icon,
-    required String timeOfDay,
-    required int count,
-    required Color activeColor,
-    required AarogyaColorTokens colors,
-  }) {
-    final isActive = count > 0;
+  Widget _buildSlotChip(
+    String label,
+    bool isActive,
+    AarogyaColorTokens colors,
+    AarogyaTypographyTokens typography,
+  ) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
         color: isActive
-            ? activeColor.withValues(alpha: 0.12)
-            : colors.surfaceActionable,
+            ? const Color(0xFF8B5CF6).withValues(alpha: 0.12)
+            : colors.neutrals.gray100,
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
           color: isActive
-              ? activeColor.withValues(alpha: 0.35)
+              ? const Color(0xFF8B5CF6).withValues(alpha: 0.3)
               : colors.borderHairline,
           width: 0.8,
         ),
@@ -524,17 +485,17 @@ class PrescriptionsHubScreen extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            icon,
-            size: 12,
-            color: isActive ? activeColor : colors.neutrals.gray400,
+            isActive ? Icons.check_circle_rounded : Icons.circle_outlined,
+            size: 11,
+            color: isActive ? const Color(0xFF8B5CF6) : colors.neutrals.gray400,
           ),
           const SizedBox(width: 4),
           Text(
-            '$timeOfDay: ${isActive ? "$count tab" : "—"}',
-            style: TextStyle(
-              fontSize: 10.5,
+            label,
+            style: typography.caption.copyWith(
+              fontSize: 10,
               fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-              color: isActive ? activeColor : colors.neutrals.gray500,
+              color: isActive ? const Color(0xFF8B5CF6) : colors.neutrals.gray600,
             ),
           ),
         ],
@@ -542,4 +503,3 @@ class PrescriptionsHubScreen extends ConsumerWidget {
     );
   }
 }
-

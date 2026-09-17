@@ -1,6 +1,10 @@
+import 'package:flutter/foundation.dart';
+
 enum AppointmentStatus {
   upcoming,
   confirmed,
+  checkedIn,
+  inQueue,
   waiting,
   inProgress,
   completed,
@@ -13,8 +17,12 @@ enum AppointmentStatus {
         return 'Upcoming';
       case AppointmentStatus.confirmed:
         return 'Confirmed';
-      case AppointmentStatus.waiting:
+      case AppointmentStatus.checkedIn:
+        return 'Checked In';
+      case AppointmentStatus.inQueue:
         return 'In Queue';
+      case AppointmentStatus.waiting:
+        return 'Waiting';
       case AppointmentStatus.inProgress:
         return 'In Progress';
       case AppointmentStatus.completed:
@@ -25,6 +33,11 @@ enum AppointmentStatus {
         return 'No Show';
     }
   }
+
+  bool get isLiveInQueue =>
+      this == AppointmentStatus.checkedIn ||
+      this == AppointmentStatus.inQueue ||
+      this == AppointmentStatus.waiting;
 }
 
 enum ConsultationType {
@@ -35,10 +48,12 @@ enum ConsultationType {
       this == ConsultationType.inPerson ? 'In-Person OPD' : 'Tele-Consultation';
 }
 
+@immutable
 class Appointment {
   final String id;
   final String patientId;
   final String patientName;
+  final String? encounterId;
   final String doctorId;
   final String doctorName;
   final String specialty;
@@ -48,7 +63,7 @@ class Appointment {
   final ConsultationType type;
   final AppointmentStatus status;
   final int tokenNumber;
-  final double fee;
+  final int feePaise;
   final String? symptoms;
   final String? notes;
 
@@ -56,6 +71,7 @@ class Appointment {
     required this.id,
     required this.patientId,
     required this.patientName,
+    this.encounterId,
     required this.doctorId,
     required this.doctorName,
     required this.specialty,
@@ -65,15 +81,19 @@ class Appointment {
     required this.type,
     required this.status,
     required this.tokenNumber,
-    required this.fee,
+    required this.feePaise,
     this.symptoms,
     this.notes,
   });
+
+  /// Rupee conversion helper
+  double get fee => feePaise / 100.0;
 
   Appointment copyWith({
     String? id,
     String? patientId,
     String? patientName,
+    String? encounterId,
     String? doctorId,
     String? doctorName,
     String? specialty,
@@ -83,7 +103,7 @@ class Appointment {
     ConsultationType? type,
     AppointmentStatus? status,
     int? tokenNumber,
-    double? fee,
+    int? feePaise,
     String? symptoms,
     String? notes,
   }) {
@@ -91,6 +111,7 @@ class Appointment {
       id: id ?? this.id,
       patientId: patientId ?? this.patientId,
       patientName: patientName ?? this.patientName,
+      encounterId: encounterId ?? this.encounterId,
       doctorId: doctorId ?? this.doctorId,
       doctorName: doctorName ?? this.doctorName,
       specialty: specialty ?? this.specialty,
@@ -100,7 +121,7 @@ class Appointment {
       type: type ?? this.type,
       status: status ?? this.status,
       tokenNumber: tokenNumber ?? this.tokenNumber,
-      fee: fee ?? this.fee,
+      feePaise: feePaise ?? this.feePaise,
       symptoms: symptoms ?? this.symptoms,
       notes: notes ?? this.notes,
     );

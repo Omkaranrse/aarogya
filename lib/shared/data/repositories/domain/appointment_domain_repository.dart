@@ -30,6 +30,7 @@ class AppointmentDomainRepository {
   Appointment bookAppointment({
     required String patientId,
     required String patientName,
+    String? encounterId,
     required String doctorId,
     required String doctorName,
     required String specialty,
@@ -37,17 +38,20 @@ class AppointmentDomainRepository {
     required DateTime dateTime,
     required String timeSlot,
     required ConsultationType type,
-    required double fee,
+    double? fee,
+    int? feePaise,
     String? symptoms,
     String? notes,
   }) {
     final token = _appointments.length + 1;
     final aptId = 'apt-${DateTime.now().millisecondsSinceEpoch}';
+    final calculatedFeePaise = feePaise ?? ((fee ?? 500.0) * 100).round();
 
     final appointment = Appointment(
       id: aptId,
       patientId: patientId,
       patientName: patientName,
+      encounterId: encounterId,
       doctorId: doctorId,
       doctorName: doctorName,
       specialty: specialty,
@@ -57,7 +61,7 @@ class AppointmentDomainRepository {
       type: type,
       status: AppointmentStatus.confirmed,
       tokenNumber: token,
-      fee: fee,
+      feePaise: calculatedFeePaise,
       symptoms: symptoms,
       notes: notes,
     );

@@ -87,7 +87,7 @@ void main() {
       );
 
       expect(repo.prescriptions.length, initialRxCount + 1);
-      expect(repo.medicalRecords.length, initialRecordsCount + 2); // consultation + prescription
+      expect(repo.medicalRecords.length, initialRecordsCount + 3); // consultation + prescription + advised diagnostic
     });
 
     test('Paying invoice updates invoice status to paid and registers receipt', () {

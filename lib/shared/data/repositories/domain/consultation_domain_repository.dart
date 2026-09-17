@@ -79,7 +79,7 @@ class ConsultationDomainRepository {
       MedicalRecord(
         id: 'mr-${DateTime.now().millisecondsSinceEpoch}',
         patientId: patient.id,
-        date: DateTime.now(),
+        occurredAt: DateTime.now(),
         type: MedicalRecordType.consultation,
         title: 'Consultation - $diagnosis',
         doctorName: doctorName,

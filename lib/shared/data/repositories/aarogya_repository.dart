@@ -3,11 +3,13 @@ import 'package:flutter/foundation.dart';
 import '../../domain/models/appointment.dart';
 import '../../domain/models/consultation.dart';
 import '../../domain/models/doctor.dart';
+import '../../domain/models/encounter.dart';
 import '../../domain/models/invoice.dart';
 import '../../domain/models/lab_report.dart';
 import '../../domain/models/medical_record.dart';
 import '../../domain/models/notification_item.dart';
 import '../../domain/models/patient.dart';
+import '../../domain/models/patient_session.dart';
 import '../../domain/models/prescription.dart';
 import '../../domain/models/queue_entry.dart';
 import '../../domain/models/user.dart';
@@ -39,10 +41,12 @@ class AarogyaRepository extends ChangeNotifier {
   // Active Session State
   late User _currentUser;
   late UserRole _activeRole;
+  late PatientSession _patientSession;
 
   // Data Collections
   List<Doctor> _doctors = [];
   List<Patient> _patients = [];
+  List<Encounter> _encounters = [];
   List<Appointment> _appointments = [];
   List<QueueEntry> _queue = [];
   final List<Consultation> _consultations = [];
@@ -55,9 +59,11 @@ class AarogyaRepository extends ChangeNotifier {
   void _initData() {
     _currentUser = AarogyaMockData.users.first;
     _activeRole = UserRole.patient;
+    _patientSession = AarogyaMockData.defaultSession;
 
     _doctors = List.from(AarogyaMockData.doctors);
     _patients = List.from(AarogyaMockData.samplePatients);
+    _encounters = List.from(AarogyaMockData.encounters);
     _appointments = List.from(AarogyaMockData.appointments);
     _queue = List.from(AarogyaMockData.liveQueue);
     _sortQueue();
@@ -117,22 +123,101 @@ class AarogyaRepository extends ChangeNotifier {
     });
   }
 
+  // Security Guard: asserts record patientId matches active patient session
+  void _guardPatientId(String recordPatientId, String recordType, String recordId) {
+    if (_activeRole == UserRole.patient && recordPatientId != _patientSession.patientId) {
+      debugPrint(
+        'SECURITY ALERT: PatientMismatchException on $recordType ($recordId). '
+        'Expected: ${_patientSession.patientId}, Actual: $recordPatientId',
+      );
+      throw PatientMismatchException(
+        expectedPatientId: _patientSession.patientId,
+        actualPatientId: recordPatientId,
+        recordType: recordType,
+        recordId: recordId,
+      );
+    }
+  }
+
   // Getters
   User get currentUser => _currentUser;
   UserRole get activeRole => _activeRole;
+  PatientSession get patientSession => _patientSession;
   List<Doctor> get doctors => List.unmodifiable(_doctors);
   List<Patient> get patients => List.unmodifiable(_patients);
-  List<Appointment> get appointments => List.unmodifiable(_appointments);
+  List<Encounter> get encounters => List.unmodifiable(_encounters);
+
+  List<Appointment> get appointments {
+    if (_activeRole == UserRole.patient) {
+      for (final a in _appointments) {
+        _guardPatientId(a.patientId, 'Appointment', a.id);
+      }
+    }
+    return List.unmodifiable(_appointments);
+  }
+
   List<QueueEntry> get queue => List.unmodifiable(_queue);
   List<Consultation> get consultations => List.unmodifiable(_consultations);
-  List<Prescription> get prescriptions => List.unmodifiable(_prescriptions);
-  List<LabReport> get labReports => List.unmodifiable(_labReports);
-  List<MedicalRecord> get medicalRecords => List.unmodifiable(_medicalRecords);
-  List<Invoice> get invoices => List.unmodifiable(_invoices);
+
+  List<Prescription> get prescriptions {
+    if (_activeRole == UserRole.patient) {
+      for (final rx in _prescriptions) {
+        _guardPatientId(rx.patientId, 'Prescription', rx.id);
+      }
+    }
+    return List.unmodifiable(_prescriptions);
+  }
+
+  List<LabReport> get labReports {
+    if (_activeRole == UserRole.patient) {
+      for (final lr in _labReports) {
+        _guardPatientId(lr.patientId, 'LabReport', lr.id);
+      }
+    }
+    return List.unmodifiable(_labReports);
+  }
+
+  List<MedicalRecord> get medicalRecords {
+    if (_activeRole == UserRole.patient) {
+      for (final mr in _medicalRecords) {
+        _guardPatientId(mr.patientId, 'MedicalRecord', mr.id);
+      }
+    }
+    final sorted = List<MedicalRecord>.from(_medicalRecords);
+    sorted.sort((a, b) => MedicalRecord.compareEvents(a, b, descending: true));
+    return List.unmodifiable(sorted);
+  }
+
+  List<Invoice> get invoices {
+    if (_activeRole == UserRole.patient) {
+      for (final inv in _invoices) {
+        _guardPatientId(inv.patientId, 'Invoice', inv.id);
+      }
+    }
+    return List.unmodifiable(_invoices);
+  }
+
   List<NotificationItem> get notifications => List.unmodifiable(_notifications);
 
   int get unreadNotificationCount =>
       _notifications.where((n) => !n.isRead).length;
+
+  // Exact Integer Paise Financial Summaries
+  int get totalPendingDuesPaise => _invoices
+      .where((i) => i.status == InvoiceStatus.pending)
+      .fold<int>(0, (sum, i) => sum + i.balanceDuePaise);
+
+  int get totalSettledPaise => _invoices
+      .where((i) => i.status == InvoiceStatus.paid)
+      .fold<int>(0, (sum, i) => sum + i.amountPaidPaise);
+
+  double get totalPendingDues => totalPendingDuesPaise / 100.0;
+  double get totalSettled => totalSettledPaise / 100.0;
+
+  // Active Prescriptions Derived Count
+  int get activePrescriptionsCount => _prescriptions
+      .where((p) => p.hasActiveMedications())
+      .length;
 
   // Role & Session Switching
   void switchRole(UserRole newRole) {
@@ -140,6 +225,7 @@ class AarogyaRepository extends ChangeNotifier {
     switch (newRole) {
       case UserRole.patient:
         _currentUser = AarogyaMockData.users[0];
+        _patientSession = AarogyaMockData.defaultSession;
         break;
       case UserRole.doctor:
         _currentUser = AarogyaMockData.users[1];
@@ -150,6 +236,11 @@ class AarogyaRepository extends ChangeNotifier {
       default:
         _currentUser = AarogyaMockData.users[0].copyWith(role: newRole);
     }
+    notifyListeners();
+  }
+
+  void setPatientSession(PatientSession session) {
+    _patientSession = session;
     notifyListeners();
   }
 
@@ -171,11 +262,15 @@ class AarogyaRepository extends ChangeNotifier {
     final token = _appointments.length + 1;
     final aptId =
         'apt-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+    final encId =
+        'enc-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+    final feePaise = (doctor.consultationFee * 100).round();
 
     final appointment = Appointment(
       id: aptId,
-      patientId: _currentUser.id,
-      patientName: _currentUser.name,
+      patientId: _patientSession.patientId,
+      patientName: _patientSession.patientName,
+      encounterId: encId,
       doctorId: doctor.id,
       doctorName: doctor.name,
       specialty: doctor.specialty,
@@ -185,7 +280,7 @@ class AarogyaRepository extends ChangeNotifier {
       type: type,
       status: AppointmentStatus.confirmed,
       tokenNumber: token,
-      fee: doctor.consultationFee,
+      feePaise: feePaise,
       symptoms: symptoms,
       notes: notes,
     );
@@ -193,29 +288,54 @@ class AarogyaRepository extends ChangeNotifier {
     _appointments.insert(0, appointment);
     FirebaseClinicalService().syncAppointment(appointment);
 
-    // Also create matching invoice
+    // Create encounter record
+    final encounter = Encounter(
+      id: encId,
+      patientId: _patientSession.patientId,
+      doctorId: doctor.id,
+      doctorName: doctor.name,
+      department: doctor.specialty,
+      occurredAt: date,
+      type: type == ConsultationType.inPerson
+          ? EncounterType.opdConsultation
+          : EncounterType.teleConsultation,
+      summary: 'Appointment booked with ${doctor.name}. Symptoms: ${symptoms ?? 'General checkup'}.',
+    );
+    _encounters.insert(0, encounter);
+
+    // Create matching invoice in exact integer paise
     final invId =
         'inv-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+    final taxPaise = (feePaise * 0.05).round();
+    final totalPaise = feePaise + taxPaise;
+
     final invoice = Invoice(
       id: invId,
       invoiceNumber:
           'INV-2026-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}',
-      patientId: _currentUser.id,
-      patientName: _currentUser.name,
+      patientId: _patientSession.patientId,
+      patientName: _patientSession.patientName,
+      encounterId: encId,
       appointmentId: aptId,
       date: DateTime.now(),
       dueDate: DateTime.now().add(const Duration(days: 3)),
       items: [
         InvoiceLineItem(
           description: '${doctor.specialty} Consultation - ${doctor.name}',
-          unitPrice: doctor.consultationFee,
-          total: doctor.consultationFee,
+          unitPricePaise: feePaise,
+          totalPaise: feePaise,
         ),
       ],
-      subtotal: doctor.consultationFee,
-      tax: doctor.consultationFee * 0.05,
-      discount: 0,
-      totalAmount: doctor.consultationFee * 1.05,
+      subtotalPaise: feePaise,
+      discountPaise: 0,
+      taxes: [
+        InvoiceTaxItem(label: 'GST (5%)', ratePercent: 5.0, amountPaise: taxPaise),
+      ],
+      roundingPaise: 0,
+      totalPaise: totalPaise,
+      amountPaidPaise: 0,
+      balanceDuePaise: totalPaise,
+      gstin: '27AARCG0001Z5Z1',
       status: InvoiceStatus.pending,
     );
     _invoices.insert(0, invoice);
@@ -280,18 +400,15 @@ class AarogyaRepository extends ChangeNotifier {
     }
   }
 
-  // Clinical Queue Prioritization (Doctor's Point of View)
+  // Clinical Queue Prioritization
   void _sortQueue() {
     _queue.sort((a, b) {
-      // 1. Consulting patient comes first (in the chamber now)
       if (a.status == QueueStatus.consulting && b.status != QueueStatus.consulting) return -1;
       if (b.status == QueueStatus.consulting && a.status != QueueStatus.consulting) return 1;
 
-      // 2. Waiting patients before completed or skipped
       if (a.status == QueueStatus.waiting && b.status != QueueStatus.waiting) return -1;
       if (b.status == QueueStatus.waiting && a.status != QueueStatus.waiting) return 1;
 
-      // 3. Among waiting patients: Emergency (0) -> Urgent (1) -> Normal (2)
       if (a.status == QueueStatus.waiting && b.status == QueueStatus.waiting) {
         final priorityRank = {
           PatientPriority.emergency: 0,
@@ -305,7 +422,6 @@ class AarogyaRepository extends ChangeNotifier {
         }
       }
 
-      // 4. Then by token number
       return a.tokenNumber.compareTo(b.tokenNumber);
     });
   }
@@ -314,7 +430,6 @@ class AarogyaRepository extends ChangeNotifier {
   void updateQueueStatus(String queueId, QueueStatus newStatus) {
     final index = _queue.indexWhere((q) => q.id == queueId);
     if (index != -1) {
-      // If moving to consulting, make others consulting move back to waiting
       if (newStatus == QueueStatus.consulting) {
         for (int i = 0; i < _queue.length; i++) {
           if (_queue[i].status == QueueStatus.consulting) {
@@ -330,7 +445,6 @@ class AarogyaRepository extends ChangeNotifier {
   }
 
   QueueEntry? callNextInQueue() {
-    // Clinically prioritize: Emergency first, then Urgent, then Normal
     int nextWaitingIndex = _queue.indexWhere(
       (q) => q.status == QueueStatus.waiting && q.priority == PatientPriority.emergency,
     );
@@ -346,7 +460,6 @@ class AarogyaRepository extends ChangeNotifier {
     }
 
     if (nextWaitingIndex != -1) {
-      // Mark current consulting as completed
       for (int i = 0; i < _queue.length; i++) {
         if (_queue[i].status == QueueStatus.consulting) {
           _queue[i] = _queue[i].copyWith(status: QueueStatus.completed);
@@ -406,8 +519,6 @@ class AarogyaRepository extends ChangeNotifier {
     return newEntry;
   }
 
-  /// Patient check-in with physiological vitals:
-  /// Automatically calculates NEWS2 EWS acuity and places the patient in the live queue.
   QueueEntry checkInAppointment({
     required String appointmentId,
     required PatientVitals vitals,
@@ -458,6 +569,8 @@ class AarogyaRepository extends ChangeNotifier {
     DateTime? followUpDate,
   }) {
     final consultationId = 'c-${DateTime.now().millisecondsSinceEpoch}';
+    final encId = 'enc-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+
     final consultation = Consultation(
       id: consultationId,
       appointmentId: appointmentId,
@@ -483,11 +596,13 @@ class AarogyaRepository extends ChangeNotifier {
       final rx = Prescription(
         id: 'rx-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
         consultationId: consultationId,
+        encounterId: encId,
         patientId: patient.id,
         patientName: patient.name,
         doctorId: _currentUser.id,
         doctorName: _currentUser.name,
         doctorSpecialty: _currentUser.specialty ?? 'General Physician',
+        department: _currentUser.department ?? 'Cardiology',
         date: DateTime.now(),
         medications: medications,
         generalAdvice: clinicalNotes,
@@ -499,9 +614,10 @@ class AarogyaRepository extends ChangeNotifier {
       final recRx = MedicalRecord(
         id: 'rec-rx-${DateTime.now().millisecondsSinceEpoch}',
         patientId: patient.id,
+        encounterId: encId,
         title: 'Prescription for $diagnosis',
         type: MedicalRecordType.prescription,
-        date: DateTime.now(),
+        occurredAt: DateTime.now(),
         doctorName: _currentUser.name,
         department: _currentUser.department ?? 'OPD',
         summary:
@@ -516,9 +632,10 @@ class AarogyaRepository extends ChangeNotifier {
     final recConsult = MedicalRecord(
       id: 'rec-c-${DateTime.now().millisecondsSinceEpoch}',
       patientId: patient.id,
+      encounterId: encId,
       title: 'Clinical Consultation - $diagnosis',
       type: MedicalRecordType.consultation,
-      date: DateTime.now(),
+      occurredAt: DateTime.now(),
       doctorName: _currentUser.name,
       department: _currentUser.department ?? 'OPD',
       summary:
@@ -527,6 +644,25 @@ class AarogyaRepository extends ChangeNotifier {
     );
     _medicalRecords.insert(0, recConsult);
     FirebaseClinicalService().syncMedicalRecord(recConsult);
+
+    // Add advised tests as pending diagnostic records if advised
+    for (final test in orderedLabTests) {
+      final recAdvised = MedicalRecord(
+        id: 'rec-adv-${DateTime.now().millisecondsSinceEpoch}-${test.hashCode}',
+        patientId: patient.id,
+        encounterId: encId,
+        title: 'Advised $test — Result Pending',
+        type: MedicalRecordType.advisedDiagnostic,
+        occurredAt: DateTime.now(),
+        doctorName: _currentUser.name,
+        department: _currentUser.department ?? 'OPD',
+        summary: 'Diagnostic test $test advised by ${_currentUser.name}. Result pending specimen collection.',
+        tags: [test, 'Pending Diagnostic'],
+        isAdvisedPending: true,
+      );
+      _medicalRecords.insert(0, recAdvised);
+      FirebaseClinicalService().syncMedicalRecord(recAdvised);
+    }
 
     // Update appointment status to completed
     final aptIndex = _appointments.indexWhere((a) => a.id == appointmentId);
@@ -553,8 +689,11 @@ class AarogyaRepository extends ChangeNotifier {
   void payInvoice(String invoiceId, String paymentMethod) {
     final index = _invoices.indexWhere((inv) => inv.id == invoiceId);
     if (index != -1) {
-      _invoices[index] = _invoices[index].copyWith(
+      final inv = _invoices[index];
+      _invoices[index] = inv.copyWith(
         status: InvoiceStatus.paid,
+        amountPaidPaise: inv.totalPaise,
+        balanceDuePaise: 0,
         paymentMethod: paymentMethod,
         paidAt: DateTime.now(),
       );

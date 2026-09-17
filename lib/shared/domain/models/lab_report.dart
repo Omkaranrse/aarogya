@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 enum LabResultStatus {
   normal,
   low,
@@ -16,8 +18,21 @@ enum LabResultStatus {
         return 'Critical';
     }
   }
+
+  String get glyph {
+    switch (this) {
+      case LabResultStatus.normal:
+        return '●';
+      case LabResultStatus.low:
+        return '↓';
+      case LabResultStatus.high:
+      case LabResultStatus.critical:
+        return '↑';
+    }
+  }
 }
 
+@immutable
 class LabTestItem {
   final String testName;
   final double value;
@@ -25,6 +40,7 @@ class LabTestItem {
   final double minRange;
   final double maxRange;
   final LabResultStatus status;
+  final String? customSeverityLabel;
 
   const LabTestItem({
     required this.testName,
@@ -33,7 +49,30 @@ class LabTestItem {
     required this.minRange,
     required this.maxRange,
     required this.status,
+    this.customSeverityLabel,
   });
+
+  String get displaySeverity => customSeverityLabel ?? status.label;
+
+  LabTestItem copyWith({
+    String? testName,
+    double? value,
+    String? unit,
+    double? minRange,
+    double? maxRange,
+    LabResultStatus? status,
+    String? customSeverityLabel,
+  }) {
+    return LabTestItem(
+      testName: testName ?? this.testName,
+      value: value ?? this.value,
+      unit: unit ?? this.unit,
+      minRange: minRange ?? this.minRange,
+      maxRange: maxRange ?? this.maxRange,
+      status: status ?? this.status,
+      customSeverityLabel: customSeverityLabel ?? this.customSeverityLabel,
+    );
+  }
 }
 
 enum ReportStatus {
@@ -56,10 +95,12 @@ enum ReportStatus {
   }
 }
 
+@immutable
 class LabReport {
   final String id;
   final String patientId;
   final String patientName;
+  final String? encounterId;
   final String testName;
   final String category; // Biochemistry, Hematology, Pathology
   final String orderedByDoctor;
@@ -73,6 +114,7 @@ class LabReport {
     required this.id,
     required this.patientId,
     required this.patientName,
+    this.encounterId,
     required this.testName,
     required this.category,
     required this.orderedByDoctor,
@@ -90,6 +132,7 @@ class LabReport {
     String? id,
     String? patientId,
     String? patientName,
+    String? encounterId,
     String? testName,
     String? category,
     String? orderedByDoctor,
@@ -103,6 +146,7 @@ class LabReport {
       id: id ?? this.id,
       patientId: patientId ?? this.patientId,
       patientName: patientName ?? this.patientName,
+      encounterId: encounterId ?? this.encounterId,
       testName: testName ?? this.testName,
       category: category ?? this.category,
       orderedByDoctor: orderedByDoctor ?? this.orderedByDoctor,

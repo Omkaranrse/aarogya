@@ -245,8 +245,32 @@ class PatientDashboard extends ConsumerWidget {
     return Builder(
       builder: (context) {
         final isMobile = Responsive.isMobile(context);
+        final primaryText = isDark
+            ? AarogyaColors.textDarkPrimary
+            : AarogyaColors.textLightPrimary;
+        final secondaryText = isDark
+            ? AarogyaColors.textDarkSecondary
+            : AarogyaColors.textLightSecondary;
+
         return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Vitals & Biometrics',
+                  style: AarogyaTypography.headingMedium(primaryText),
+                ),
+                Text(
+                  vitals.provenanceLabel,
+                  style: AarogyaTypography.caption(secondaryText).copyWith(
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
             // Primary Tier Hero Vitals: Blood Pressure + Heart Rate
             Row(
               children: [
@@ -255,7 +279,9 @@ class PatientDashboard extends ConsumerWidget {
                     label: 'Blood Pressure',
                     value: vitals.bloodPressure,
                     unit: 'mmHg',
-                    delta: 'Optimal',
+                    delta: vitals.isStale()
+                        ? 'Last updated ${AarogyaFormatters.timeAgo(vitals.recordedAt)}'
+                        : 'Optimal',
                     status: MetricClinicalStatus.stable,
                     tier: MetricCardTier.primary,
                   ),
