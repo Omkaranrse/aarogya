@@ -303,25 +303,11 @@ class AdaptiveShell extends ConsumerWidget {
           child: Row(
             children: [
               // Logo & Branding
-              Container(
+              Image.asset(
+                'assets/fav.png',
                 width: isMobile ? 32 : 38,
                 height: isMobile ? 32 : 38,
-                decoration: BoxDecoration(
-                  gradient: AarogyaColors.primaryGradient,
-                  borderRadius: AarogyaRadius.radiusMd,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AarogyaColors.primaryCyan.withValues(alpha: 0.4),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.favorite_rounded,
-                  color: Colors.white,
-                  size: isMobile ? 18 : 22,
-                ),
+                fit: BoxFit.contain,
               ),
               const SizedBox(width: 8),
               Column(
