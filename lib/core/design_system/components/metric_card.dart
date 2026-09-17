@@ -93,13 +93,18 @@ class MetricCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    label.toUpperCase(),
-                    style: typography.caption.copyWith(
-                      letterSpacing: 0.8,
-                      color: colors.neutrals.gray500,
+                  Flexible(
+                    child: Text(
+                      label.toUpperCase(),
+                      style: typography.caption.copyWith(
+                        letterSpacing: 0.8,
+                        color: colors.neutrals.gray500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
+                  const SizedBox(width: 6),
                   Container(
                     width: 6,
                     height: 6,
@@ -111,28 +116,32 @@ class MetricCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 12),
-              // Hero Display Value + Unit
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
-                children: [
-                  Text(
-                    value,
-                    style: typography.display.copyWith(
-                      color: colors.neutrals.gray900,
-                    ),
-                  ),
-                  if (unit.isNotEmpty) ...[
-                    const SizedBox(width: 4),
+              // Hero Display Value + Unit with FittedBox
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
                     Text(
-                      unit,
-                      style: typography.caption.copyWith(
-                        color: colors.neutrals.gray500,
-                        fontWeight: FontWeight.w500,
+                      value,
+                      style: typography.display.copyWith(
+                        color: colors.neutrals.gray900,
                       ),
                     ),
+                    if (unit.isNotEmpty) ...[
+                      const SizedBox(width: 4),
+                      Text(
+                        unit,
+                        style: typography.caption.copyWith(
+                          color: colors.neutrals.gray500,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
               const SizedBox(height: 6),
               // Delta / Reference Info
@@ -143,6 +152,8 @@ class MetricCard extends StatelessWidget {
                     color: statusColor,
                     fontWeight: FontWeight.w600,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 )
               else
                 const SizedBox(height: 14),
@@ -180,29 +191,33 @@ class MetricCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    Text(
-                      value,
-                      style: typography.subtitle.copyWith(
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                        fontWeight: FontWeight.w700,
-                        color: colors.neutrals.gray900,
-                      ),
-                    ),
-                    if (unit.isNotEmpty) ...[
-                      const SizedBox(width: 3),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
                       Text(
-                        unit,
-                        style: typography.caption.copyWith(
-                          fontSize: 10.0,
-                          color: colors.neutrals.gray500,
+                        value,
+                        style: typography.subtitle.copyWith(
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                          fontWeight: FontWeight.w700,
+                          color: colors.neutrals.gray900,
                         ),
                       ),
+                      if (unit.isNotEmpty) ...[
+                        const SizedBox(width: 3),
+                        Text(
+                          unit,
+                          style: typography.caption.copyWith(
+                            fontSize: 10.0,
+                            color: colors.neutrals.gray500,
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ],
             ),
