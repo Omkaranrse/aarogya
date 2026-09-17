@@ -1,23 +1,16 @@
 import 'package:flutter/material.dart';
-import '../tokens/colors.dart';
+
 import '../tokens/radius.dart';
 import '../tokens/spacing.dart';
-import '../tokens/typography.dart';
+import '../../theme/aarogya_theme_tokens.dart';
 
-enum AarogyaButtonVariant {
-  primary,
-  secondary,
-  outline,
-  ghost,
-  destructive,
-}
+enum AarogyaButtonVariant { primary, secondary, outline, ghost, destructive }
 
-enum AarogyaButtonSize {
-  sm,
-  md,
-  lg,
-}
+enum AarogyaButtonSize { sm, md, lg }
 
+/// Precision Clinical CTA Button.
+/// Single unified CTA style used app-wide with primary and secondary/destructive variants.
+/// Follows strict 2-tier elevation, radius 8, and no ad-hoc neon glow.
 class AarogyaButton extends StatefulWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -46,10 +39,12 @@ class AarogyaButton extends StatefulWidget {
 
 class _AarogyaButtonState extends State<AarogyaButton> {
   bool _isHovered = false;
+  bool _isPressed = false;
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = context.aarogyaColors;
+    final typography = context.aarogyaTypography;
     final isEnabled = widget.onPressed != null && !widget.isLoading;
 
     double height;
@@ -59,23 +54,23 @@ class _AarogyaButtonState extends State<AarogyaButton> {
 
     switch (widget.size) {
       case AarogyaButtonSize.sm:
-        height = 36.0;
+        height = 34.0;
         padding = const EdgeInsets.symmetric(horizontal: 12.0);
-        textStyle = AarogyaTypography.caption(Colors.white);
-        iconSize = 14.0;
+        textStyle = typography.caption;
+        iconSize = 13.0;
         break;
       case AarogyaButtonSize.lg:
-        height = 52.0;
+        height = 48.0;
         padding = const EdgeInsets.symmetric(horizontal: 24.0);
-        textStyle = AarogyaTypography.title(Colors.white);
-        iconSize = 20.0;
+        textStyle = typography.subtitle;
+        iconSize = 18.0;
         break;
       case AarogyaButtonSize.md:
-      default:
-        height = 44.0;
-        padding = const EdgeInsets.symmetric(horizontal: 18.0);
-        textStyle = AarogyaTypography.label(Colors.white);
-        iconSize = 16.0;
+        height = 40.0;
+        padding = const EdgeInsets.symmetric(horizontal: 16.0);
+        textStyle = typography.body;
+        iconSize = 15.0;
+        break;
     }
 
     BoxDecoration decoration;
@@ -83,84 +78,90 @@ class _AarogyaButtonState extends State<AarogyaButton> {
 
     switch (widget.variant) {
       case AarogyaButtonVariant.primary:
-        textColor = Colors.white;
+        textColor = colors.onAccentAction;
+        final baseBg = isEnabled
+            ? (_isHovered
+                ? colors.accentAction.withValues(alpha: 0.9)
+                : colors.accentAction)
+            : colors.neutrals.gray300;
+
         decoration = BoxDecoration(
-          gradient: isEnabled
-              ? AarogyaColors.primaryGradient
-              : LinearGradient(
-                  colors: [Colors.grey.shade600, Colors.grey.shade700],
-                ),
-          borderRadius: AarogyaRadius.radiusMd,
-          boxShadow: isEnabled
-              ? [
-                  BoxShadow(
-                    color: AarogyaColors.primaryCyan.withOpacity(_isHovered ? 0.45 : 0.25),
-                    blurRadius: _isHovered ? 18 : 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : [],
+          color: baseBg,
+          borderRadius: AarogyaRadius.radius8,
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.15),
+            width: 1.0,
+          ),
         );
         break;
 
       case AarogyaButtonVariant.secondary:
-        textColor = isDark ? AarogyaColors.textDarkPrimary : AarogyaColors.textLightPrimary;
+        textColor = isEnabled ? colors.neutrals.gray900 : colors.neutrals.gray400;
         decoration = BoxDecoration(
-          color: isDark ? const Color(0x331E293B) : const Color(0x1F0284C7),
-          borderRadius: AarogyaRadius.radiusMd,
+          color: _isHovered ? colors.surfaceActionable : colors.surfaceInformational,
+          borderRadius: AarogyaRadius.radius8,
           border: Border.all(
-            color: isDark ? AarogyaColors.darkGlassBorderSubtle : AarogyaColors.lightGlassBorderSubtle,
+            color: colors.borderHairline,
+            width: 1.0,
           ),
         );
         break;
 
       case AarogyaButtonVariant.outline:
-        textColor = isDark ? AarogyaColors.primaryCyan : AarogyaColors.primaryBlue;
+        textColor = isEnabled ? colors.primary : colors.neutrals.gray400;
         decoration = BoxDecoration(
-          color: Colors.transparent,
-          borderRadius: AarogyaRadius.radiusMd,
+          color: _isHovered
+              ? colors.primary.withValues(alpha: 0.08)
+              : Colors.transparent,
+          borderRadius: AarogyaRadius.radius8,
           border: Border.all(
-            color: _isHovered ? textColor : textColor.withOpacity(0.5),
-            width: 1.5,
+            color: isEnabled
+                ? (_isHovered ? colors.primary : colors.borderHairline)
+                : colors.borderHairline,
+            width: 1.0,
           ),
         );
         break;
 
       case AarogyaButtonVariant.destructive:
-        textColor = Colors.white;
+        // Clinical carmine destructive action
+        textColor = colors.clinicalCritical;
         decoration = BoxDecoration(
-          color: AarogyaColors.critical,
-          borderRadius: AarogyaRadius.radiusMd,
-          boxShadow: isEnabled
-              ? [
-                  BoxShadow(
-                    color: AarogyaColors.critical.withOpacity(_isHovered ? 0.4 : 0.2),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : [],
+          color: _isHovered
+              ? colors.clinicalCriticalSubtle
+              : colors.clinicalCriticalSubtle.withValues(alpha: 0.5),
+          borderRadius: AarogyaRadius.radius8,
+          border: Border.all(
+            color: colors.clinicalCritical.withValues(alpha: 0.3),
+            width: 1.0,
+          ),
         );
         break;
 
       case AarogyaButtonVariant.ghost:
-        textColor = isDark ? AarogyaColors.textDarkSecondary : AarogyaColors.textLightSecondary;
+        textColor = isEnabled
+            ? (_isHovered ? colors.neutrals.gray900 : colors.neutrals.gray600)
+            : colors.neutrals.gray400;
         decoration = BoxDecoration(
-          color: _isHovered
-              ? (isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05))
-              : Colors.transparent,
-          borderRadius: AarogyaRadius.radiusMd,
+          color: _isHovered ? colors.surfaceActionable : Colors.transparent,
+          borderRadius: AarogyaRadius.radius8,
         );
         break;
     }
 
-    final content = AnimatedContainer(
-      duration: const Duration(milliseconds: 150),
-      height: height,
-      width: widget.fullWidth ? double.infinity : widget.width,
-      padding: padding,
-      decoration: decoration,
-      child: Center(
+    final content = AnimatedScale(
+      scale: _isPressed && isEnabled ? 0.98 : 1.0,
+      duration: const Duration(milliseconds: 80),
+      curve: Curves.easeOutCubic,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 140),
+        height: height,
+        width: widget.fullWidth ? double.infinity : widget.width,
+        padding: padding,
+        decoration: decoration,
+        alignment: (widget.fullWidth || widget.width != null)
+            ? Alignment.center
+            : null,
         child: widget.isLoading
             ? SizedBox(
                 width: iconSize,
@@ -171,7 +172,9 @@ class _AarogyaButtonState extends State<AarogyaButton> {
                 ),
               )
             : Row(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisSize: (widget.fullWidth || widget.width != null)
+                    ? MainAxisSize.max
+                    : MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   if (widget.icon != null) ...[
@@ -180,7 +183,10 @@ class _AarogyaButtonState extends State<AarogyaButton> {
                   ],
                   Text(
                     widget.label,
-                    style: textStyle.copyWith(color: textColor),
+                    style: textStyle.copyWith(
+                      color: textColor,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
               ),
@@ -193,6 +199,12 @@ class _AarogyaButtonState extends State<AarogyaButton> {
       onExit: (_) => setState(() => _isHovered = false),
       child: GestureDetector(
         onTap: isEnabled ? widget.onPressed : null,
+        onTapDown: isEnabled ? (_) => setState(() => _isPressed = true) : null,
+        onTapUp: isEnabled ? (_) => setState(() => _isPressed = false) : null,
+        onTapCancel: isEnabled
+            ? () => setState(() => _isPressed = false)
+            : null,
+        behavior: HitTestBehavior.opaque,
         child: content,
       ),
     );

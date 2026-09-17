@@ -1,74 +1,219 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../core/design_system/glass/glass_card.dart';
 import '../../core/design_system/tokens/colors.dart';
 import '../../core/design_system/tokens/radius.dart';
-import '../../core/design_system/tokens/spacing.dart';
 import '../../core/design_system/tokens/typography.dart';
-import '../../core/design_system/components/aarogya_badge.dart';
+import '../../core/design_system/motion/aarogya_motion.dart';
 import '../../core/design_system/components/aarogya_button.dart';
 import '../../core/design_system/components/aarogya_empty_state.dart';
+import '../../core/design_system/components/contextual_header.dart';
+import '../../core/design_system/components/range_gauge_indicator.dart';
+import '../../core/theme/aarogya_theme_tokens.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/responsive.dart';
 import '../../shared/domain/models/lab_report.dart';
 import '../../shared/state/aarogya_providers.dart';
+import '../../shared/components/printable_clinical_document_dialog.dart';
 
-class LaboratoryHubScreen extends ConsumerWidget {
+class LaboratoryHubScreen extends ConsumerStatefulWidget {
   const LaboratoryHubScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LaboratoryHubScreen> createState() =>
+      _LaboratoryHubScreenState();
+}
+
+class _LaboratoryHubScreenState extends ConsumerState<LaboratoryHubScreen> {
+  bool _onlyAbnormal = false;
+
+  @override
+  Widget build(BuildContext context) {
     final labReports = ref.watch(labReportsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final primaryText = isDark ? AarogyaColors.textDarkPrimary : AarogyaColors.textLightPrimary;
-    final secondaryText = isDark ? AarogyaColors.textDarkSecondary : AarogyaColors.textLightSecondary;
+    final primaryText = isDark
+        ? AarogyaColors.textDarkPrimary
+        : AarogyaColors.textLightPrimary;
+    final secondaryText = isDark
+        ? AarogyaColors.textDarkSecondary
+        : AarogyaColors.textLightSecondary;
+    final accentColor = isDark
+        ? AarogyaColors.primaryCyan
+        : AarogyaColors.primaryBlue;
+
+    final filtered = _onlyAbnormal
+        ? labReports.where((r) => r.hasAbnormalResults).toList()
+        : labReports;
+
+    final abnormalCount = labReports.where((r) => r.hasAbnormalResults).length;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Padding(
-        padding: EdgeInsets.all(Responsive.isMobile(context) ? 12 : AarogyaSpacing.xxl),
+        padding: EdgeInsets.symmetric(
+          horizontal: Responsive.isMobile(context) ? 12 : 24,
+          vertical: Responsive.isMobile(context) ? 12 : 16,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Diagnostic Laboratory Reports', style: AarogyaTypography.headingLarge(primaryText)),
-                      Text(
-                        'Verified clinical pathology, biochemistry, and hematology results',
-                        style: AarogyaTypography.bodyMedium(secondaryText),
+            ContextualHeader(
+              title: 'Laboratory Reports',
+              subtitle: 'Verified diagnostic panels & pathological findings',
+              statusLabel: '${labReports.length} Panels',
+              statusColor: context.aarogyaColors.primary,
+            ),
+            const SizedBox(height: 8),
+
+            // Filter Tabs
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  ChoiceChip(
+                    label: Text('All (${labReports.length})'),
+                    selected: !_onlyAbnormal,
+                    onSelected: (_) => setState(() => _onlyAbnormal = false),
+                    selectedColor: accentColor.withValues(alpha: 0.15),
+                    backgroundColor: Colors.transparent,
+                    labelStyle:
+                        AarogyaTypography.caption(
+                          !_onlyAbnormal ? accentColor : secondaryText,
+                        ).copyWith(
+                          fontWeight: !_onlyAbnormal
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                        ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      side: BorderSide(
+                        color: !_onlyAbnormal
+                            ? accentColor
+                            : (isDark
+                                  ? AarogyaColors.darkGlassBorderSubtle
+                                  : AarogyaColors.lightGlassBorderSubtle),
                       ),
-                    ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                AarogyaBadge(
-                  label: '${labReports.length} Reports Ready',
-                  variant: AarogyaBadgeVariant.cyan,
-                ),
-              ],
+                  const SizedBox(width: 8),
+                  ChoiceChip(
+                    label: Text('Abnormal Flagged ($abnormalCount)'),
+                    selected: _onlyAbnormal,
+                    onSelected: (_) => setState(() => _onlyAbnormal = true),
+                    selectedColor: AarogyaColors.critical.withValues(alpha: 0.15),
+                    backgroundColor: Colors.transparent,
+                    labelStyle:
+                        AarogyaTypography.caption(
+                          _onlyAbnormal ? AarogyaColors.critical : secondaryText,
+                        ).copyWith(
+                          fontWeight: _onlyAbnormal
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                        ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      side: BorderSide(
+                        color: _onlyAbnormal
+                            ? AarogyaColors.critical
+                            : (isDark
+                                  ? AarogyaColors.darkGlassBorderSubtle
+                                  : AarogyaColors.lightGlassBorderSubtle),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 8),
 
             Expanded(
-              child: labReports.isEmpty
+              child: filtered.isEmpty
                   ? const AarogyaEmptyState(
                       icon: Icons.biotech_outlined,
-                      title: 'No Laboratory Reports',
-                      description: 'Ordered diagnostic tests will appear here once specimens are analyzed.',
+                      title: 'No Reports Found',
+                      description:
+                          'No diagnostic panels match the selected filter.',
                     )
-                  : ListView.separated(
-                      padding: EdgeInsets.zero,
-                      itemCount: labReports.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 8),
-                      itemBuilder: (context, index) {
-                        final report = labReports[index];
-                        return _buildReportCard(context, report, isDark, primaryText, secondaryText);
+                  : LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isWide = constraints.maxWidth > 850;
+                        if (!isWide || filtered.length <= 1) {
+                          return ListView.separated(
+                            padding: const EdgeInsets.only(bottom: 24),
+                            itemCount: filtered.length,
+                            separatorBuilder: (_, _) =>
+                                const SizedBox(height: 10),
+                            itemBuilder: (context, index) {
+                              final report = filtered[index];
+                              final card = _buildReportCard(
+                                context,
+                                report,
+                                isDark,
+                                primaryText,
+                                secondaryText,
+                                accentColor,
+                              );
+                              if (isWide) {
+                                return Center(
+                                  child: ConstrainedBox(
+                                    constraints:
+                                        const BoxConstraints(maxWidth: 850),
+                                    child: card,
+                                  ),
+                                );
+                              }
+                              return card;
+                            },
+                          );
+                        }
+                        return SingleChildScrollView(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  children: [
+                                    for (int i = 0; i < filtered.length; i += 2)
+                                      Padding(
+                                        padding:
+                                            const EdgeInsets.only(bottom: 12),
+                                        child: _buildReportCard(
+                                          context,
+                                          filtered[i],
+                                          isDark,
+                                          primaryText,
+                                          secondaryText,
+                                          accentColor,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  children: [
+                                    for (int i = 1; i < filtered.length; i += 2)
+                                      Padding(
+                                        padding:
+                                            const EdgeInsets.only(bottom: 12),
+                                        child: _buildReportCard(
+                                          context,
+                                          filtered[i],
+                                          isDark,
+                                          primaryText,
+                                          secondaryText,
+                                          accentColor,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
                       },
                     ),
             ),
@@ -84,12 +229,10 @@ class LaboratoryHubScreen extends ConsumerWidget {
     bool isDark,
     Color primaryText,
     Color secondaryText,
+    Color accentColor,
   ) {
     return GlassCard(
-      glowColor: report.hasAbnormalResults ? AarogyaColors.critical : AarogyaColors.primaryCyan,
-      padding: Responsive.isMobile(context)
-          ? const EdgeInsets.symmetric(horizontal: 14, vertical: 12)
-          : AarogyaSpacing.paddingXl,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -100,13 +243,18 @@ class LaboratoryHubScreen extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: (report.hasAbnormalResults ? AarogyaColors.critical : AarogyaColors.primaryCyan)
-                      .withValues(alpha: 0.15),
+                  color:
+                      (report.hasAbnormalResults
+                              ? AarogyaColors.critical
+                              : accentColor)
+                          .withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.science_rounded,
-                  color: report.hasAbnormalResults ? AarogyaColors.critical : AarogyaColors.primaryCyan,
+                  color: report.hasAbnormalResults
+                      ? AarogyaColors.critical
+                      : accentColor,
                   size: 20,
                 ),
               ),
@@ -121,8 +269,156 @@ class LaboratoryHubScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Category: ${report.category} • Ordered by ${report.orderedByDoctor}',
+                      '${report.category} • ${report.orderedByDoctor}',
                       style: AarogyaTypography.caption(secondaryText),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                alignment: WrapAlignment.end,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color:
+                          (report.status == ReportStatus.completed
+                                  ? AarogyaColors.success
+                                  : AarogyaColors.warning)
+                              .withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color:
+                            (report.status == ReportStatus.completed
+                                    ? AarogyaColors.success
+                                    : AarogyaColors.warning)
+                                .withValues(alpha: 0.28),
+                        width: 0.8,
+                      ),
+                    ),
+                    child: Text(
+                      report.status.displayName,
+                      style: AarogyaTypography.caption(
+                        report.status == ReportStatus.completed
+                            ? AarogyaColors.success
+                            : AarogyaColors.warning,
+                      ).copyWith(fontWeight: FontWeight.w700, fontSize: 10),
+                    ),
+                  ),
+                  if (report.hasAbnormalResults)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 7,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AarogyaColors.critical.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: AarogyaColors.critical.withValues(alpha: 0.3),
+                          width: 0.8,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          AarogyaPulseBeacon(
+                            color: AarogyaColors.critical,
+                            size: 4.5,
+                          ),
+                          const SizedBox(width: 3.5),
+                          Text(
+                            'Flagged',
+                            style:
+                                AarogyaTypography.caption(
+                                  AarogyaColors.critical,
+                                ).copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 10,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+          const Divider(height: 18),
+
+          // Numeric Test Items with Visual Reference Ranges
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              Text(
+                'Diagnostic Parameters & Reference Gauges',
+                style: AarogyaTypography.label(primaryText),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isDark
+                        ? AarogyaColors.darkGlassBorderSubtle
+                        : AarogyaColors.lightGlassBorderSubtle,
+                    width: 0.8,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: AarogyaColors.warning,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 3),
+                    Text(
+                      'Low',
+                      style: AarogyaTypography.caption(secondaryText).copyWith(fontSize: 10),
+                    ),
+                    const SizedBox(width: 6),
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: AarogyaColors.success,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 3),
+                    Text(
+                      'Normal',
+                      style: AarogyaTypography.caption(secondaryText).copyWith(fontSize: 10),
+                    ),
+                    const SizedBox(width: 6),
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: AarogyaColors.critical,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 3),
+                    Text(
+                      'High',
+                      style: AarogyaTypography.caption(secondaryText).copyWith(fontSize: 10),
                     ),
                   ],
                 ),
@@ -130,47 +426,28 @@ class LaboratoryHubScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Wrap(
-            spacing: 6,
-            runSpacing: 4,
-            children: [
-              AarogyaBadge(
-                label: report.status.displayName,
-                variant: report.status == ReportStatus.completed
-                    ? AarogyaBadgeVariant.success
-                    : AarogyaBadgeVariant.warning,
-              ),
-              if (report.hasAbnormalResults)
-                const AarogyaBadge(
-                  label: 'Action Required',
-                  variant: AarogyaBadgeVariant.critical,
-                ),
-            ],
-          ),
-          const Divider(height: 20),
-
-          // Numeric Test Items with Reference Ranges
-          Text('Laboratory Test Parameters & Reference Ranges', style: AarogyaTypography.label(primaryText)),
-          const SizedBox(height: AarogyaSpacing.sm),
           Container(
             decoration: BoxDecoration(
-              color: (isDark ? AarogyaColors.darkSurface : AarogyaColors.lightBg).withValues(alpha: 0.5),
+              color:
+                  (isDark ? AarogyaColors.darkSurface : AarogyaColors.lightBg)
+                      .withValues(alpha: 0.5),
               borderRadius: AarogyaRadius.radiusMd,
               border: Border.all(
-                color: isDark ? AarogyaColors.darkGlassBorderSubtle : AarogyaColors.lightGlassBorderSubtle,
+                color: isDark
+                    ? AarogyaColors.darkGlassBorderSubtle
+                    : AarogyaColors.lightGlassBorderSubtle,
               ),
             ),
             child: Column(
               children: report.items.asMap().entries.map((entry) {
                 final idx = entry.key;
                 final item = entry.value;
-                final isAbnormal = item.status != LabResultStatus.normal;
-                final statusColor = item.status == LabResultStatus.normal
-                    ? AarogyaColors.success
-                    : (item.status == LabResultStatus.critical ? AarogyaColors.critical : AarogyaColors.warning);
 
                 return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     border: idx < report.items.length - 1
                         ? Border(
@@ -182,48 +459,15 @@ class LaboratoryHubScreen extends ConsumerWidget {
                           )
                         : null,
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              item.testName,
-                              style: AarogyaTypography.bodyMedium(primaryText).copyWith(fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          AarogyaBadge(
-                            label: item.status.label,
-                            variant: isAbnormal ? AarogyaBadgeVariant.critical : AarogyaBadgeVariant.success,
-                            showDot: isAbnormal,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                '${item.value}',
-                                style: AarogyaTypography.title(statusColor).copyWith(fontWeight: FontWeight.w800),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(item.unit, style: AarogyaTypography.caption(secondaryText)),
-                            ],
-                          ),
-                          Text(
-                            'Ref: ${item.minRange} - ${item.maxRange} ${item.unit}',
-                            style: AarogyaTypography.caption(secondaryText),
-                          ),
-                        ],
-                      ),
-                    ],
+                  child: RangeGaugeIndicator(
+                    label: item.testName,
+                    value: item.value,
+                    minRange: item.minRange,
+                    maxRange: item.maxRange,
+                    unit: item.unit,
+                    statusLabel: item.status.label,
+                    showHeader: true,
+                    showBandLabels: true,
                   ),
                 );
               }).toList(),
@@ -231,10 +475,14 @@ class LaboratoryHubScreen extends ConsumerWidget {
           ),
 
           if (report.labTechnicianNotes != null) ...[
-            const SizedBox(height: AarogyaSpacing.sm),
+            const SizedBox(height: 10),
             Row(
               children: [
-                const Icon(Icons.info_outline_rounded, size: 16, color: AarogyaColors.info),
+                const Icon(
+                  Icons.info_outline_rounded,
+                  size: 16,
+                  color: AarogyaColors.info,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -246,7 +494,7 @@ class LaboratoryHubScreen extends ConsumerWidget {
             ),
           ],
 
-          const Divider(height: 20),
+          const Divider(height: 18),
 
           // Footer with dates and actions
           Wrap(
@@ -256,7 +504,7 @@ class LaboratoryHubScreen extends ConsumerWidget {
             runSpacing: 8,
             children: [
               Text(
-                'Sample Drawn: ${AarogyaFormatters.dateTime(report.orderDate)}',
+                'Sample: ${AarogyaFormatters.dateTime(report.orderDate)}',
                 style: AarogyaTypography.caption(secondaryText),
               ),
               Row(
@@ -269,23 +517,22 @@ class LaboratoryHubScreen extends ConsumerWidget {
                     size: AarogyaButtonSize.sm,
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Report sharing link generated.')),
+                        const SnackBar(
+                          content: Text('Secure medical sharing link copied.'),
+                        ),
                       );
                     },
                   ),
                   const SizedBox(width: 8),
                   AarogyaButton(
-                    label: 'Download PDF',
-                    icon: Icons.file_download_outlined,
+                    label: 'Print / PDF',
+                    icon: Icons.print_rounded,
                     size: AarogyaButtonSize.sm,
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Downloading ${report.testName} report PDF...'),
-                          backgroundColor: AarogyaColors.primaryCyan,
+                    onPressed: () =>
+                        PrintableClinicalDocumentDialog.showLabReport(
+                          context,
+                          report,
                         ),
-                      );
-                    },
                   ),
                 ],
               ),

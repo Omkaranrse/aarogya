@@ -5,6 +5,8 @@ class Medication {
   final String frequency; // e.g. 1-0-1 (Morning & Night)
   final String duration; // e.g. 5 Days
   final String instructions; // e.g. After Food
+  final DateTime? startDate;
+  final DateTime? endDate;
 
   const Medication({
     required this.id,
@@ -13,6 +15,8 @@ class Medication {
     required this.frequency,
     required this.duration,
     required this.instructions,
+    this.startDate,
+    this.endDate,
   });
 
   Medication copyWith({
@@ -22,6 +26,8 @@ class Medication {
     String? frequency,
     String? duration,
     String? instructions,
+    DateTime? startDate,
+    DateTime? endDate,
   }) {
     return Medication(
       id: id ?? this.id,
@@ -30,6 +36,8 @@ class Medication {
       frequency: frequency ?? this.frequency,
       duration: duration ?? this.duration,
       instructions: instructions ?? this.instructions,
+      startDate: startDate ?? this.startDate,
+      endDate: endDate ?? this.endDate,
     );
   }
 }

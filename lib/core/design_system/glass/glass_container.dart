@@ -1,5 +1,7 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
+
 import '../tokens/colors.dart';
 import '../tokens/spacing.dart';
 import '../tokens/radius.dart';
@@ -52,12 +54,13 @@ class GlassContainer extends StatelessWidget {
       margin: margin,
       decoration: BoxDecoration(
         borderRadius: radius,
-        boxShadow: shadows ??
+        boxShadow:
+            shadows ??
             [
               BoxShadow(
                 color: isDark
-                    ? Colors.black.withOpacity(0.35)
-                    : Colors.blueGrey.withOpacity(0.08),
+                    ? Colors.black.withValues(alpha: 0.35)
+                    : Colors.blueGrey.withValues(alpha: 0.08),
                 blurRadius: 20,
                 offset: const Offset(0, 8),
               ),

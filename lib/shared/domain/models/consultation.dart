@@ -66,7 +66,8 @@ class Consultation {
       vitals: vitals ?? this.vitals,
       diagnosis: diagnosis ?? this.diagnosis,
       clinicalNotes: clinicalNotes ?? this.clinicalNotes,
-      prescribedMedications: prescribedMedications ?? this.prescribedMedications,
+      prescribedMedications:
+          prescribedMedications ?? this.prescribedMedications,
       orderedLabTests: orderedLabTests ?? this.orderedLabTests,
       followUpDate: followUpDate ?? this.followUpDate,
     );

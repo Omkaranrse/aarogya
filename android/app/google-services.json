@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "749192968385",
+    "project_id": "aarogya-5abf6",
+    "storage_bucket": "aarogya-5abf6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:749192968385:android:79adc2e5ddb084110cfc40",
+        "android_client_info": {
+          "package_name": "com.omkar.aarogya"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDhZ8aQ5Oew8KVtD_7dzIdYzDy_gC1ClVI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

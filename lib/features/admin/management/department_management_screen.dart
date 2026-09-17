@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../core/design_system/glass/glass_card.dart';
 import '../../../core/design_system/tokens/colors.dart';
 import '../../../core/design_system/tokens/spacing.dart';
@@ -90,13 +91,20 @@ class DepartmentManagementScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryText = isDark ? AarogyaColors.textDarkPrimary : AarogyaColors.textLightPrimary;
-    final secondaryText = isDark ? AarogyaColors.textDarkSecondary : AarogyaColors.textLightSecondary;
+    final primaryText = isDark
+        ? AarogyaColors.textDarkPrimary
+        : AarogyaColors.textLightPrimary;
+    final secondaryText = isDark
+        ? AarogyaColors.textDarkSecondary
+        : AarogyaColors.textLightSecondary;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Padding(
-        padding: EdgeInsets.all(Responsive.isMobile(context) ? 12 : AarogyaSpacing.xxl),
+        padding: EdgeInsets.symmetric(
+          horizontal: Responsive.isMobile(context) ? 12 : 24,
+          vertical: Responsive.isMobile(context) ? 12 : 16,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -107,7 +115,10 @@ class DepartmentManagementScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Clinical Departments & Specialties', style: AarogyaTypography.headingLarge(primaryText)),
+                      Text(
+                        'Clinical Departments & Specialties',
+                        style: AarogyaTypography.headingLarge(primaryText),
+                      ),
                       Text(
                         'Configure OPD clinic suites, faculty allocations, and tariff ceilings',
                         style: AarogyaTypography.bodyMedium(secondaryText),
@@ -116,87 +127,159 @@ class DepartmentManagementScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                AarogyaBadge(label: '${departments.length} Operational Units', variant: AarogyaBadgeVariant.cyan),
+                AarogyaBadge(
+                  label: '${departments.length} Operational Units',
+                  variant: AarogyaBadgeVariant.cyan,
+                ),
               ],
             ),
             const SizedBox(height: 8),
 
             Expanded(
-              child: LayoutBuilder(builder: (context, constraints) {
-                final crossCount = constraints.maxWidth > 850 ? 2 : 1;
-                return GridView.builder(
-                  padding: EdgeInsets.zero,
-                  itemCount: departments.length,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: crossCount,
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
-                    mainAxisExtent: 180,
-                  ),
-                  itemBuilder: (context, index) {
-                    final dept = departments[index];
-                    return GlassCard(
-                      glowColor: AarogyaColors.primaryCyan,
-                      padding: AarogyaSpacing.paddingLg,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: AarogyaColors.primaryCyan.withOpacity(0.15),
-                                  shape: BoxShape.circle,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final crossCount = constraints.maxWidth > 850 ? 2 : 1;
+                  return GridView.builder(
+                    padding: EdgeInsets.zero,
+                    itemCount: departments.length,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossCount,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                      mainAxisExtent: constraints.maxWidth < 600 ? 205 : 185,
+                    ),
+                    itemBuilder: (context, index) {
+                      final dept = departments[index];
+                      return GlassCard(
+                        glowColor: AarogyaColors.primaryCyan,
+                        padding: EdgeInsets.all(constraints.maxWidth < 600 ? 14 : 18),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: AarogyaColors.primaryCyan.withValues(
+                                      alpha: 0.15,
+                                    ),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    dept.icon,
+                                    color: AarogyaColors.primaryCyan,
+                                    size: 20,
+                                  ),
                                 ),
-                                child: Icon(dept.icon, color: AarogyaColors.primaryCyan, size: 20),
-                              ),
-                              const SizedBox(width: AarogyaSpacing.md),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(dept.name, style: AarogyaTypography.title(primaryText)),
-                                    Text('Chair: ${dept.headOfDept}', style: AarogyaTypography.caption(secondaryText)),
-                                  ],
+                                const SizedBox(width: AarogyaSpacing.md),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        dept.name,
+                                        style: AarogyaTypography.title(
+                                          primaryText,
+                                        ),
+                                      ),
+                                      Text(
+                                        'Chair: ${dept.headOfDept}',
+                                        style: AarogyaTypography.caption(
+                                          secondaryText,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const Divider(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('Active Faculty', style: AarogyaTypography.caption(secondaryText)),
-                                  Text('${dept.activeDoctors} Specialists', style: AarogyaTypography.label(primaryText)),
-                                ],
-                              ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('OPD Suites', style: AarogyaTypography.caption(secondaryText)),
-                                  Text('${dept.opdRooms} Rooms', style: AarogyaTypography.label(primaryText)),
-                                ],
-                              ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text('Fee Tariff', style: AarogyaTypography.caption(secondaryText)),
-                                  Text(dept.feeRange, style: AarogyaTypography.label(AarogyaColors.success)),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                );
-              }),
+                              ],
+                            ),
+                            const Divider(height: 16),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Active Faculty',
+                                        style: AarogyaTypography.caption(
+                                          secondaryText,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      Text(
+                                        '${dept.activeDoctors} Specialists',
+                                        style: AarogyaTypography.label(
+                                          primaryText,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        'OPD Suites',
+                                        style: AarogyaTypography.caption(
+                                          secondaryText,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      Text(
+                                        '${dept.opdRooms} Rooms',
+                                        style: AarogyaTypography.label(
+                                          primaryText,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text(
+                                        'Fee Tariff',
+                                        style: AarogyaTypography.caption(
+                                          secondaryText,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      Text(
+                                        dept.feeRange,
+                                        style: AarogyaTypography.label(
+                                          AarogyaColors.success,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
           ],
         ),

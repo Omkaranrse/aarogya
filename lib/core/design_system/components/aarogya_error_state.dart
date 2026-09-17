@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../tokens/colors.dart';
 import '../tokens/spacing.dart';
 import '../tokens/typography.dart';
@@ -19,8 +20,12 @@ class AarogyaErrorState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryText = isDark ? AarogyaColors.textDarkPrimary : AarogyaColors.textLightPrimary;
-    final secondaryText = isDark ? AarogyaColors.textDarkSecondary : AarogyaColors.textLightSecondary;
+    final primaryText = isDark
+        ? AarogyaColors.textDarkPrimary
+        : AarogyaColors.textLightPrimary;
+    final secondaryText = isDark
+        ? AarogyaColors.textDarkSecondary
+        : AarogyaColors.textLightSecondary;
 
     return Center(
       child: Padding(
@@ -32,9 +37,9 @@ class AarogyaErrorState extends StatelessWidget {
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AarogyaColors.critical.withOpacity(0.12),
+                color: AarogyaColors.critical.withValues(alpha: 0.12),
                 border: Border.all(
-                  color: AarogyaColors.critical.withOpacity(0.3),
+                  color: AarogyaColors.critical.withValues(alpha: 0.3),
                 ),
               ),
               child: const Icon(

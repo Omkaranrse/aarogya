@@ -1,16 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_core/firebase_core.dart';
+
 import 'app/shell/adaptive_shell.dart';
 import 'app/theme/aarogya_theme.dart';
+import 'features/auth/auth_screen.dart';
+import 'firebase_options.dart';
 import 'shared/state/aarogya_providers.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(
-    const ProviderScope(
-      child: AarogyaApp(),
-    ),
-  );
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    debugPrint('Firebase initialization notice: $e');
+  }
+
+  runApp(const ProviderScope(child: AarogyaApp()));
 }
 
 class AarogyaApp extends ConsumerWidget {
@@ -18,15 +26,14 @@ class AarogyaApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(themeModeProvider);
+    final isAuthenticated = ref.watch(isAuthenticatedProvider);
 
     return MaterialApp(
       title: 'Aarogya • Next-Gen Hospital & Healthcare Platform',
       debugShowCheckedModeBanner: false,
       theme: AarogyaTheme.lightTheme,
-      darkTheme: AarogyaTheme.darkTheme,
-      themeMode: themeMode,
-      home: const AdaptiveShell(),
+      themeMode: ThemeMode.light,
+      home: isAuthenticated ? const AdaptiveShell() : const AuthScreen(),
     );
   }
 }

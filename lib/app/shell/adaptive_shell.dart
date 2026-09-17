@@ -193,6 +193,7 @@ class AdaptiveShell extends ConsumerWidget {
 
     final safeIndex = currentIndex < navItems.length ? currentIndex : 0;
     final currentScreen = navItems[safeIndex].screen;
+    final isLocked = ref.watch(isStationLockedProvider);
 
     return Scaffold(
       backgroundColor: isDark ? AarogyaColors.darkBg : AarogyaColors.lightBg,
@@ -257,6 +258,12 @@ class AdaptiveShell extends ConsumerWidget {
               ),
             ],
           ),
+
+          // Clinical Duty Rounds Biometric Lock Screen Overlay
+          if (isLocked)
+            Positioned.fill(
+              child: _buildStationLockOverlay(context, ref, user, role, isDark),
+            ),
         ],
       ),
     );
@@ -347,9 +354,13 @@ class AdaptiveShell extends ConsumerWidget {
                   ),
                   if (!isMobile)
                     Text(
-                      'Next-Gen Medical OS',
+                      'CLINICAL INTELLIGENCE OS',
                       style: AarogyaTypography.caption(
                         isDark ? AarogyaColors.textDarkMuted : AarogyaColors.textLightMuted,
+                      ).copyWith(
+                        fontSize: 9.5,
+                        letterSpacing: 0.8,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                 ],
@@ -364,7 +375,7 @@ class AdaptiveShell extends ConsumerWidget {
                   color: isDark ? const Color(0x331E293B) : const Color(0x1F0284C7),
                   borderRadius: AarogyaRadius.radiusPill,
                   border: Border.all(
-                    color: AarogyaColors.primaryCyan.withOpacity(0.3),
+                    color: AarogyaColors.primaryCyan.withValues(alpha: 0.3),
                   ),
                 ),
                 child: DropdownButtonHideUnderline(
@@ -475,6 +486,40 @@ class AdaptiveShell extends ConsumerWidget {
                 ],
               ),
 
+              // Clinical Duty Rounds Station Lock (Doctors & Admins)
+              if (role == UserRole.doctor || role == UserRole.admin) ...[
+                IconButton(
+                  visualDensity: isMobile ? VisualDensity.compact : VisualDensity.standard,
+                  padding: EdgeInsets.zero,
+                  constraints: isMobile ? const BoxConstraints(minWidth: 32, minHeight: 32) : null,
+                  tooltip: 'Lock Station for Clinical Rounds',
+                  icon: Icon(
+                    Icons.lock_outline_rounded,
+                    size: isMobile ? 18 : 20,
+                    color: isDark ? AarogyaColors.textDarkPrimary : AarogyaColors.textLightPrimary,
+                  ),
+                  onPressed: () {
+                    ref.read(biometricAuthServiceProvider).lockStation();
+                  },
+                ),
+              ],
+
+              // Sign Out / Switch Account Action
+              IconButton(
+                visualDensity: isMobile ? VisualDensity.compact : VisualDensity.standard,
+                padding: EdgeInsets.zero,
+                constraints: isMobile ? const BoxConstraints(minWidth: 32, minHeight: 32) : null,
+                tooltip: 'Sign Out',
+                icon: Icon(
+                  Icons.logout_rounded,
+                  size: isMobile ? 18 : 20,
+                  color: isDark ? AarogyaColors.textDarkSecondary : AarogyaColors.textLightSecondary,
+                ),
+                onPressed: () async {
+                  await ref.read(authServiceProvider).signOut();
+                },
+              ),
+
               // User Profile Pill (Desktop only)
               if (Responsive.isDesktop(context)) ...[
                 const SizedBox(width: AarogyaSpacing.sm),
@@ -524,8 +569,8 @@ class AdaptiveShell extends ConsumerWidget {
       borderRadius: BorderRadius.zero,
       padding: const EdgeInsets.symmetric(vertical: AarogyaSpacing.lg, horizontal: AarogyaSpacing.sm),
       backgroundColor: isDark
-          ? AarogyaColors.darkGlassBg.withOpacity(0.6)
-          : AarogyaColors.lightGlassBg.withOpacity(0.7),
+          ? AarogyaColors.darkGlassBg.withValues(alpha: 0.6)
+          : AarogyaColors.lightGlassBg.withValues(alpha: 0.7),
       border: Border(
         right: BorderSide(
           color: isDark ? AarogyaColors.darkGlassBorderSubtle : AarogyaColors.lightGlassBorderSubtle,
@@ -536,7 +581,7 @@ class AdaptiveShell extends ConsumerWidget {
           Expanded(
             child: ListView.separated(
               itemCount: items.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 6),
+              separatorBuilder: (_, _) => const SizedBox(height: 6),
               itemBuilder: (context, index) {
                 final item = items[index];
                 final isSelected = activeIndex == index;
@@ -555,15 +600,15 @@ class AdaptiveShell extends ConsumerWidget {
                     decoration: BoxDecoration(
                       color: isSelected
                           ? (isDark
-                              ? AarogyaColors.primaryCyan.withOpacity(0.15)
-                              : AarogyaColors.primaryBlue.withOpacity(0.12))
+                              ? AarogyaColors.primaryCyan.withValues(alpha: 0.15)
+                              : AarogyaColors.primaryBlue.withValues(alpha: 0.12))
                           : Colors.transparent,
                       borderRadius: AarogyaRadius.radiusMd,
                       border: isSelected
                           ? Border.all(
                               color: isDark
-                                  ? AarogyaColors.primaryCyan.withOpacity(0.4)
-                                  : AarogyaColors.primaryBlue.withOpacity(0.3),
+                                  ? AarogyaColors.primaryCyan.withValues(alpha: 0.4)
+                                  : AarogyaColors.primaryBlue.withValues(alpha: 0.3),
                             )
                           : null,
                     ),
@@ -614,7 +659,7 @@ class AdaptiveShell extends ConsumerWidget {
           // Bottom Clinical System Status Indicator
           if (!isCollapsed)
             Container(
-              padding: AarogyaSpacing.paddingMd,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               decoration: BoxDecoration(
                 color: isDark ? const Color(0x331E293B) : const Color(0x1F0284C7),
                 borderRadius: AarogyaRadius.radiusMd,
@@ -623,17 +668,22 @@ class AdaptiveShell extends ConsumerWidget {
                 ),
               ),
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const AarogyaBadge(
                     label: 'Sync Live',
                     variant: AarogyaBadgeVariant.success,
                     showDot: true,
                   ),
-                  const Spacer(),
-                  Text(
-                    'v2.6 Cloud',
-                    style: AarogyaTypography.caption(
-                      isDark ? AarogyaColors.textDarkMuted : AarogyaColors.textLightMuted,
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      'v2.6 Cloud',
+                      style: AarogyaTypography.caption(
+                        isDark ? AarogyaColors.textDarkMuted : AarogyaColors.textLightMuted,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                     ),
                   ),
                 ],
@@ -912,6 +962,125 @@ class AdaptiveShell extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildStationLockOverlay(
+    BuildContext context,
+    WidgetRef ref,
+    dynamic user,
+    UserRole role,
+    bool isDark,
+  ) {
+    return Container(
+      color: isDark ? const Color(0xF2080B11) : const Color(0xF2F8FAFC),
+      child: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Container(
+              padding: const EdgeInsets.all(28),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF0E1524) : Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: isDark ? const Color(0x29FFFFFF) : const Color(0x140F172A),
+                  width: 1.0,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.15),
+                    blurRadius: 30,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF00BFA5).withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.lock_rounded,
+                      size: 32,
+                      color: Color(0xFF00BFA5),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Text(
+                    'Clinical Station Locked',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: isDark ? Colors.white : const Color(0xFF101828),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${user.name} • ${role.displayName} Duty Session',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF00BFA5),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Clinical station secured during ward rounds in compliance with hospital confidentiality standards.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      height: 1.4,
+                      color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      final bio = ref.read(biometricAuthServiceProvider);
+                      await bio.authenticate(
+                        reason: 'Scan Face ID / Touch ID to resume clinical rounds',
+                      );
+                    },
+                    icon: const Icon(Icons.fingerprint_rounded, size: 20),
+                    label: const Text(
+                      'Verify Biometrics to Unlock',
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF00BFA5),
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 48),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextButton.icon(
+                    onPressed: () async {
+                      ref.read(biometricAuthServiceProvider).unlockStation();
+                      await ref.read(authServiceProvider).signOut();
+                    },
+                    icon: const Icon(Icons.logout_rounded, size: 16, color: AarogyaColors.critical),
+                    label: const Text(
+                      'Emergency Sign Out',
+                      style: TextStyle(fontSize: 13, color: AarogyaColors.critical),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

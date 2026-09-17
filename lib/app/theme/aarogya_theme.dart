@@ -1,53 +1,60 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../core/design_system/tokens/colors.dart';
+
 import '../../core/design_system/tokens/radius.dart';
+import '../../core/theme/aarogya_theme_tokens.dart';
 
 class AarogyaTheme {
   AarogyaTheme._();
 
   static ThemeData get darkTheme {
-    final baseTextTheme = GoogleFonts.plusJakartaSansTextTheme(ThemeData.dark().textTheme);
+    final baseTextTheme = GoogleFonts.poppinsTextTheme(
+      ThemeData.dark().textTheme,
+    );
 
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      scaffoldBackgroundColor: AarogyaColors.darkBg,
-      primaryColor: AarogyaColors.primaryCyan,
-      colorScheme: const ColorScheme.dark(
-        primary: AarogyaColors.primaryCyan,
-        secondary: AarogyaColors.accentIndigo,
-        surface: AarogyaColors.darkSurface,
-        background: AarogyaColors.darkBg,
-        error: AarogyaColors.critical,
-        onPrimary: Colors.white,
-        onSurface: AarogyaColors.textDarkPrimary,
+      fontFamily: GoogleFonts.poppins().fontFamily,
+      scaffoldBackgroundColor: AarogyaColorTokens.dark.scaffoldBg,
+      primaryColor: AarogyaColorTokens.dark.primary,
+      colorScheme: ColorScheme.dark(
+        primary: AarogyaColorTokens.dark.primary,
+        secondary: AarogyaColorTokens.dark.accentAction,
+        surface: AarogyaColorTokens.dark.surfaceInformational,
+        error: AarogyaColorTokens.dark.clinicalCritical,
+        onPrimary: AarogyaColorTokens.dark.onPrimary,
+        onSurface: AarogyaColorTokens.dark.neutrals.gray900,
       ),
+      extensions: [
+        AarogyaColorTokens.dark,
+        AarogyaTypographyTokens.dark(AarogyaColorTokens.dark),
+      ],
       textTheme: baseTextTheme.apply(
-        bodyColor: AarogyaColors.textDarkPrimary,
-        displayColor: AarogyaColors.textDarkPrimary,
+        bodyColor: AarogyaColorTokens.dark.neutrals.gray900,
+        displayColor: AarogyaColorTokens.dark.neutrals.gray900,
       ),
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
-        iconTheme: IconThemeData(color: AarogyaColors.textDarkPrimary),
+        iconTheme: IconThemeData(color: AarogyaColorTokens.dark.neutrals.gray900),
       ),
-      dividerTheme: const DividerThemeData(
-        color: AarogyaColors.darkGlassBorderSubtle,
+      dividerTheme: DividerThemeData(
+        color: AarogyaColorTokens.dark.borderHairline,
         thickness: 1,
       ),
       cardTheme: CardThemeData(
-        color: AarogyaColors.darkGlassCard,
+        color: AarogyaColorTokens.dark.surfaceInformational,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: AarogyaRadius.radiusLg,
-          side: const BorderSide(color: AarogyaColors.darkGlassBorderSubtle),
+          borderRadius: AarogyaRadius.radiusMd,
+          side: BorderSide(color: AarogyaColorTokens.dark.borderHairline),
         ),
       ),
       dialogTheme: DialogThemeData(
-        backgroundColor: AarogyaColors.darkSurface,
-        shape: RoundedRectangleBorder(borderRadius: AarogyaRadius.radiusXl),
+        backgroundColor: AarogyaColorTokens.dark.surfaceInformational,
+        shape: RoundedRectangleBorder(borderRadius: AarogyaRadius.radiusMd),
       ),
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: Colors.transparent,
@@ -57,47 +64,53 @@ class AarogyaTheme {
   }
 
   static ThemeData get lightTheme {
-    final baseTextTheme = GoogleFonts.plusJakartaSansTextTheme(ThemeData.light().textTheme);
+    final baseTextTheme = GoogleFonts.poppinsTextTheme(
+      ThemeData.light().textTheme,
+    );
 
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      scaffoldBackgroundColor: AarogyaColors.lightBg,
-      primaryColor: AarogyaColors.primaryBlue,
-      colorScheme: const ColorScheme.light(
-        primary: AarogyaColors.primaryBlue,
-        secondary: AarogyaColors.primaryCyan,
-        surface: AarogyaColors.lightSurface,
-        background: AarogyaColors.lightBg,
-        error: AarogyaColors.critical,
-        onPrimary: Colors.white,
-        onSurface: AarogyaColors.textLightPrimary,
+      fontFamily: GoogleFonts.poppins().fontFamily,
+      scaffoldBackgroundColor: AarogyaColorTokens.light.scaffoldBg,
+      primaryColor: AarogyaColorTokens.light.primary,
+      colorScheme: ColorScheme.light(
+        primary: AarogyaColorTokens.light.primary,
+        secondary: AarogyaColorTokens.light.accentAction,
+        surface: AarogyaColorTokens.light.surfaceInformational,
+        error: AarogyaColorTokens.light.clinicalCritical,
+        onPrimary: AarogyaColorTokens.light.onPrimary,
+        onSurface: AarogyaColorTokens.light.neutrals.gray900,
       ),
+      extensions: [
+        AarogyaColorTokens.light,
+        AarogyaTypographyTokens.light(AarogyaColorTokens.light),
+      ],
       textTheme: baseTextTheme.apply(
-        bodyColor: AarogyaColors.textLightPrimary,
-        displayColor: AarogyaColors.textLightPrimary,
+        bodyColor: AarogyaColorTokens.light.neutrals.gray900,
+        displayColor: AarogyaColorTokens.light.neutrals.gray900,
       ),
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
-        iconTheme: IconThemeData(color: AarogyaColors.textLightPrimary),
+        iconTheme: IconThemeData(color: AarogyaColorTokens.light.neutrals.gray900),
       ),
-      dividerTheme: const DividerThemeData(
-        color: AarogyaColors.lightGlassBorderSubtle,
+      dividerTheme: DividerThemeData(
+        color: AarogyaColorTokens.light.borderHairline,
         thickness: 1,
       ),
       cardTheme: CardThemeData(
-        color: AarogyaColors.lightGlassCard,
+        color: AarogyaColorTokens.light.surfaceInformational,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: AarogyaRadius.radiusLg,
-          side: const BorderSide(color: AarogyaColors.lightGlassBorderSubtle),
+          borderRadius: AarogyaRadius.radiusMd,
+          side: BorderSide(color: AarogyaColorTokens.light.borderHairline),
         ),
       ),
       dialogTheme: DialogThemeData(
-        backgroundColor: AarogyaColors.lightSurface,
-        shape: RoundedRectangleBorder(borderRadius: AarogyaRadius.radiusXl),
+        backgroundColor: AarogyaColorTokens.light.surfaceInformational,
+        shape: RoundedRectangleBorder(borderRadius: AarogyaRadius.radiusMd),
       ),
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: Colors.transparent,

@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import '../tokens/colors.dart';
-import '../tokens/radius.dart';
-import '../tokens/spacing.dart';
-import '../tokens/typography.dart';
 
+import '../tokens/colors.dart';
+
+/// Distinct badge variants for clinical acuity, status and category labeling.
 enum AarogyaBadgeVariant {
   success,
   warning,
@@ -14,6 +13,8 @@ enum AarogyaBadgeVariant {
   purple,
 }
 
+/// A sleek, high-contrast, glassmorphic badge chip used across patient,
+/// doctor, and administrative portals.
 class AarogyaBadge extends StatelessWidget {
   final String label;
   final AarogyaBadgeVariant variant;
@@ -28,75 +29,72 @@ class AarogyaBadge extends StatelessWidget {
     this.icon,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    Color baseColor;
-
+  Color _getColor() {
     switch (variant) {
       case AarogyaBadgeVariant.success:
-        baseColor = AarogyaColors.success;
-        break;
+        return AarogyaColors.success;
       case AarogyaBadgeVariant.warning:
-        baseColor = AarogyaColors.warning;
-        break;
+        return AarogyaColors.warning;
       case AarogyaBadgeVariant.critical:
-        baseColor = AarogyaColors.critical;
-        break;
-      case AarogyaBadgeVariant.cyan:
-        baseColor = AarogyaColors.primaryCyan;
-        break;
-      case AarogyaBadgeVariant.purple:
-        baseColor = AarogyaColors.accentPurple;
-        break;
-      case AarogyaBadgeVariant.neutral:
-        baseColor = AarogyaColors.neutral;
-        break;
+        return AarogyaColors.critical;
       case AarogyaBadgeVariant.info:
-      default:
-        baseColor = AarogyaColors.info;
+        return AarogyaColors.info;
+      case AarogyaBadgeVariant.neutral:
+        return AarogyaColors.neutral;
+      case AarogyaBadgeVariant.cyan:
+        return AarogyaColors.primaryCyan;
+      case AarogyaBadgeVariant.purple:
+        return AarogyaColors.accentPurple;
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _getColor();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AarogyaSpacing.sm + 2,
-        vertical: AarogyaSpacing.xs,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
-        color: baseColor.withValues(alpha: 0.12),
-        borderRadius: AarogyaRadius.radiusPill,
+        color: color.withValues(alpha: isDark ? 0.16 : 0.12),
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: baseColor.withValues(alpha: 0.3),
-          width: 1.0,
+          color: color.withValues(alpha: isDark ? 0.38 : 0.28),
+          width: 0.9,
         ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          if (showDot) ...[
+          if (icon != null) ...[
+            Icon(icon, size: 11, color: color),
+            const SizedBox(width: 4),
+          ] else if (showDot) ...[
             Container(
-              width: 6,
-              height: 6,
+              width: 5,
+              height: 5,
               decoration: BoxDecoration(
-                color: baseColor,
+                color: color,
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: baseColor.withOpacity(0.8),
-                    blurRadius: 4,
-                    spreadRadius: 1,
+                    color: color.withValues(alpha: 0.45),
+                    blurRadius: 3,
+                    spreadRadius: 0.5,
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: AarogyaSpacing.xs + 2),
-          ] else if (icon != null) ...[
-            Icon(icon, size: 12, color: baseColor),
-            const SizedBox(width: AarogyaSpacing.xs),
+            const SizedBox(width: 4.5),
           ],
           Text(
             label,
-            style: AarogyaTypography.caption(baseColor).copyWith(
-              fontWeight: FontWeight.w600,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: color,
+              letterSpacing: 0.2,
             ),
           ),
         ],

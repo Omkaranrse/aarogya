@@ -5,6 +5,7 @@ class PatientVitals {
   final double temperature;
   final double weight;
   final DateTime recordedAt;
+  final int? respiratoryRate;
 
   const PatientVitals({
     required this.bloodPressure,
@@ -13,6 +14,7 @@ class PatientVitals {
     required this.temperature,
     required this.weight,
     required this.recordedAt,
+    this.respiratoryRate,
   });
 
   PatientVitals copyWith({
@@ -22,6 +24,7 @@ class PatientVitals {
     double? temperature,
     double? weight,
     DateTime? recordedAt,
+    int? respiratoryRate,
   }) {
     return PatientVitals(
       bloodPressure: bloodPressure ?? this.bloodPressure,
@@ -30,6 +33,7 @@ class PatientVitals {
       temperature: temperature ?? this.temperature,
       weight: weight ?? this.weight,
       recordedAt: recordedAt ?? this.recordedAt,
+      respiratoryRate: respiratoryRate ?? this.respiratoryRate,
     );
   }
 }

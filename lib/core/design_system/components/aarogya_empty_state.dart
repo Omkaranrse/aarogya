@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../tokens/colors.dart';
 import '../tokens/spacing.dart';
 import '../tokens/typography.dart';
@@ -23,8 +24,12 @@ class AarogyaEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryText = isDark ? AarogyaColors.textDarkPrimary : AarogyaColors.textLightPrimary;
-    final secondaryText = isDark ? AarogyaColors.textDarkSecondary : AarogyaColors.textLightSecondary;
+    final primaryText = isDark
+        ? AarogyaColors.textDarkPrimary
+        : AarogyaColors.textLightPrimary;
+    final secondaryText = isDark
+        ? AarogyaColors.textDarkSecondary
+        : AarogyaColors.textLightSecondary;
 
     return Center(
       child: Padding(
@@ -36,15 +41,25 @@ class AarogyaEmptyState extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: (isDark ? AarogyaColors.primaryCyan : AarogyaColors.primaryBlue).withOpacity(0.1),
+                color:
+                    (isDark
+                            ? AarogyaColors.primaryCyan
+                            : AarogyaColors.primaryBlue)
+                        .withValues(alpha: 0.1),
                 border: Border.all(
-                  color: (isDark ? AarogyaColors.primaryCyan : AarogyaColors.primaryBlue).withOpacity(0.25),
+                  color:
+                      (isDark
+                              ? AarogyaColors.primaryCyan
+                              : AarogyaColors.primaryBlue)
+                          .withValues(alpha: 0.25),
                 ),
               ),
               child: Icon(
                 icon,
                 size: 38,
-                color: isDark ? AarogyaColors.primaryCyan : AarogyaColors.primaryBlue,
+                color: isDark
+                    ? AarogyaColors.primaryCyan
+                    : AarogyaColors.primaryBlue,
               ),
             ),
             const SizedBox(height: AarogyaSpacing.lg),

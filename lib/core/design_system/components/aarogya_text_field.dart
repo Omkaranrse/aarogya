@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../tokens/colors.dart';
 import '../tokens/radius.dart';
 import '../tokens/spacing.dart';
@@ -19,6 +20,7 @@ class AarogyaTextField extends StatefulWidget {
   final bool autofocus;
   final VoidCallback? onClear;
   final bool showClearButton;
+  final String? errorText;
 
   const AarogyaTextField({
     super.key,
@@ -36,6 +38,7 @@ class AarogyaTextField extends StatefulWidget {
     this.autofocus = false,
     this.onClear,
     this.showClearButton = false,
+    this.errorText,
   });
 
   @override
@@ -49,40 +52,56 @@ class _AarogyaTextFieldState extends State<AarogyaTextField> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final primaryText = isDark ? AarogyaColors.textDarkPrimary : AarogyaColors.textLightPrimary;
-    final secondaryText = isDark ? AarogyaColors.textDarkSecondary : AarogyaColors.textLightSecondary;
-    final mutedText = isDark ? AarogyaColors.textDarkMuted : AarogyaColors.textLightMuted;
+    final primaryText = isDark
+        ? AarogyaColors.textDarkPrimary
+        : AarogyaColors.textLightPrimary;
+    final secondaryText = isDark
+        ? AarogyaColors.textDarkSecondary
+        : AarogyaColors.textLightSecondary;
+    final mutedText = isDark
+        ? AarogyaColors.textDarkMuted
+        : AarogyaColors.textLightMuted;
 
+    final hasError = widget.errorText != null && widget.errorText!.isNotEmpty;
     final fill = isDark ? const Color(0x331E293B) : const Color(0xB3FFFFFF);
-    final borderDefault = isDark ? AarogyaColors.darkGlassBorderSubtle : AarogyaColors.lightGlassBorderSubtle;
-    final borderActive = AarogyaColors.primaryCyan;
+    final borderDefault = isDark
+        ? AarogyaColors.darkGlassBorderSubtle
+        : AarogyaColors.lightGlassBorderSubtle;
+    final borderActive = hasError
+        ? AarogyaColors.critical
+        : AarogyaColors.primaryCyan;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
         if (widget.label != null) ...[
-          Text(
-            widget.label!,
-            style: AarogyaTypography.label(secondaryText),
-          ),
+          Text(widget.label!, style: AarogyaTypography.label(secondaryText)),
           const SizedBox(height: AarogyaSpacing.xs),
         ],
         Focus(
           onFocusChange: (focus) => setState(() => _isFocused = focus),
-          child: Container(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOutCubic,
             decoration: BoxDecoration(
-              color: fill,
+              color: _isFocused
+                  ? (isDark ? const Color(0x401E293B) : const Color(0xFAFFFFFF))
+                  : fill,
               borderRadius: AarogyaRadius.radiusMd,
               border: Border.all(
-                color: _isFocused ? borderActive : borderDefault,
-                width: _isFocused ? 1.5 : 1.0,
+                color: hasError
+                    ? AarogyaColors.critical
+                    : (_isFocused ? borderActive : borderDefault),
+                width: hasError || _isFocused ? 1.2 : 1.0,
               ),
               boxShadow: _isFocused
                   ? [
                       BoxShadow(
-                        color: borderActive.withOpacity(0.2),
-                        blurRadius: 10,
+                        color: borderActive.withValues(
+                          alpha: isDark ? 0.22 : 0.15,
+                        ),
+                        blurRadius: 12,
                         offset: const Offset(0, 2),
                       ),
                     ]
@@ -105,13 +124,21 @@ class _AarogyaTextFieldState extends State<AarogyaTextField> {
                 prefixIcon: widget.prefixIcon != null
                     ? Icon(
                         widget.prefixIcon,
-                        color: _isFocused ? borderActive : secondaryText,
+                        color: hasError
+                            ? AarogyaColors.critical
+                            : (_isFocused ? borderActive : secondaryText),
                         size: 18,
                       )
                     : null,
-                suffixIcon: widget.showClearButton && widget.controller?.text.isNotEmpty == true
+                suffixIcon:
+                    widget.showClearButton &&
+                        widget.controller?.text.isNotEmpty == true
                     ? IconButton(
-                        icon: Icon(Icons.close_rounded, size: 16, color: mutedText),
+                        icon: Icon(
+                          Icons.close_rounded,
+                          size: 16,
+                          color: mutedText,
+                        ),
                         onPressed: () {
                           widget.controller?.clear();
                           if (widget.onClear != null) widget.onClear!();
@@ -129,6 +156,29 @@ class _AarogyaTextFieldState extends State<AarogyaTextField> {
             ),
           ),
         ),
+        if (hasError) ...[
+          const SizedBox(height: 5),
+          Row(
+            children: [
+              const Icon(
+                Icons.error_outline_rounded,
+                size: 13,
+                color: AarogyaColors.critical,
+              ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  widget.errorText!,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: AarogyaColors.critical,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../core/design_system/glass/glass_container.dart';
 import '../../core/design_system/glass/glass_card.dart';
 import '../../core/design_system/tokens/colors.dart';
@@ -28,8 +29,12 @@ class _NotificationsPanelState extends ConsumerState<NotificationsPanel> {
     final repo = ref.read(repositoryProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final primaryText = isDark ? AarogyaColors.textDarkPrimary : AarogyaColors.textLightPrimary;
-    final secondaryText = isDark ? AarogyaColors.textDarkSecondary : AarogyaColors.textLightSecondary;
+    final primaryText = isDark
+        ? AarogyaColors.textDarkPrimary
+        : AarogyaColors.textLightPrimary;
+    final secondaryText = isDark
+        ? AarogyaColors.textDarkSecondary
+        : AarogyaColors.textLightSecondary;
 
     final filtered = _selectedCategory == null
         ? notifications
@@ -43,7 +48,9 @@ class _NotificationsPanelState extends ConsumerState<NotificationsPanel> {
         return GlassContainer(
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           padding: AarogyaSpacing.paddingXl,
-          backgroundColor: isDark ? AarogyaColors.darkSurface : AarogyaColors.lightSurface,
+          backgroundColor: isDark
+              ? AarogyaColors.darkSurface
+              : AarogyaColors.lightSurface,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -53,7 +60,7 @@ class _NotificationsPanelState extends ConsumerState<NotificationsPanel> {
                   width: 48,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: Colors.grey.withOpacity(0.3),
+                    color: Colors.grey.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
@@ -64,24 +71,29 @@ class _NotificationsPanelState extends ConsumerState<NotificationsPanel> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Text(
-                        'Notifications',
-                        style: AarogyaTypography.headingLarge(primaryText),
-                      ),
-                      const SizedBox(width: 8),
-                      AarogyaBadge(
-                        label: '${notifications.length}',
-                        variant: AarogyaBadgeVariant.cyan,
-                        showDot: false,
-                      ),
-                    ],
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            'Notifications',
+                            style: AarogyaTypography.headingLarge(primaryText),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        AarogyaBadge(
+                          label: '${notifications.length}',
+                          variant: AarogyaBadgeVariant.cyan,
+                          showDot: false,
+                        ),
+                      ],
+                    ),
                   ),
                   TextButton.icon(
                     onPressed: () => repo.markAllNotificationsAsRead(),
                     icon: const Icon(Icons.done_all_rounded, size: 16),
-                    label: const Text('Mark all as read'),
+                    label: const Text('Mark read'),
                   ),
                 ],
               ),
@@ -117,10 +129,17 @@ class _NotificationsPanelState extends ConsumerState<NotificationsPanel> {
                     : ListView.separated(
                         controller: scrollController,
                         itemCount: filtered.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: AarogyaSpacing.md),
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: AarogyaSpacing.md),
                         itemBuilder: (context, index) {
                           final item = filtered[index];
-                          return _buildNotificationCard(item, repo, isDark, primaryText, secondaryText);
+                          return _buildNotificationCard(
+                            item,
+                            repo,
+                            isDark,
+                            primaryText,
+                            secondaryText,
+                          );
                         },
                       ),
               ),
@@ -131,24 +150,35 @@ class _NotificationsPanelState extends ConsumerState<NotificationsPanel> {
     );
   }
 
-  Widget _buildFilterChip(String label, bool isSelected, VoidCallback onTap, bool isDark) {
+  Widget _buildFilterChip(
+    String label,
+    bool isSelected,
+    VoidCallback onTap,
+    bool isDark,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: ChoiceChip(
         label: Text(label),
         selected: isSelected,
         onSelected: (_) => onTap(),
-        selectedColor: isDark ? AarogyaColors.primaryCyan.withOpacity(0.2) : AarogyaColors.primaryBlue.withOpacity(0.15),
+        selectedColor: isDark
+            ? AarogyaColors.primaryCyan.withValues(alpha: 0.2)
+            : AarogyaColors.primaryBlue.withValues(alpha: 0.15),
         labelStyle: AarogyaTypography.caption(
           isSelected
               ? (isDark ? AarogyaColors.primaryCyan : AarogyaColors.primaryBlue)
-              : (isDark ? AarogyaColors.textDarkSecondary : AarogyaColors.textLightSecondary),
+              : (isDark
+                    ? AarogyaColors.textDarkSecondary
+                    : AarogyaColors.textLightSecondary),
         ).copyWith(fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500),
         shape: RoundedRectangleBorder(
           borderRadius: AarogyaRadius.radiusPill,
           side: BorderSide(
             color: isSelected
-                ? (isDark ? AarogyaColors.primaryCyan : AarogyaColors.primaryBlue)
+                ? (isDark
+                      ? AarogyaColors.primaryCyan
+                      : AarogyaColors.primaryBlue)
                 : Colors.transparent,
           ),
         ),
@@ -198,9 +228,9 @@ class _NotificationsPanelState extends ConsumerState<NotificationsPanel> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.15),
+              color: iconColor.withValues(alpha: 0.15),
               shape: BoxShape.circle,
-              border: Border.all(color: iconColor.withOpacity(0.3)),
+              border: Border.all(color: iconColor.withValues(alpha: 0.3)),
             ),
             child: Icon(icon, size: 18, color: iconColor),
           ),
@@ -215,7 +245,9 @@ class _NotificationsPanelState extends ConsumerState<NotificationsPanel> {
                     Text(
                       item.title,
                       style: AarogyaTypography.title(primaryText).copyWith(
-                        fontWeight: item.isRead ? FontWeight.w500 : FontWeight.w700,
+                        fontWeight: item.isRead
+                            ? FontWeight.w500
+                            : FontWeight.w700,
                       ),
                     ),
                     if (!item.isRead)
@@ -238,7 +270,9 @@ class _NotificationsPanelState extends ConsumerState<NotificationsPanel> {
                 Text(
                   AarogyaFormatters.timeAgo(item.timestamp),
                   style: AarogyaTypography.caption(
-                    isDark ? AarogyaColors.textDarkMuted : AarogyaColors.textLightMuted,
+                    isDark
+                        ? AarogyaColors.textDarkMuted
+                        : AarogyaColors.textLightMuted,
                   ),
                 ),
               ],

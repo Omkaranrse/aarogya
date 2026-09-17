@@ -1,3 +1,5 @@
+import 'patient.dart';
+
 enum QueueStatus {
   waiting,
   consulting,
@@ -49,6 +51,9 @@ class QueueEntry {
   final QueueStatus status;
   final PatientPriority priority;
   final String chiefComplaint;
+  final int? ewsScore;
+  final String? ewsCategory;
+  final PatientVitals? vitals;
 
   const QueueEntry({
     required this.id,
@@ -64,6 +69,9 @@ class QueueEntry {
     required this.status,
     required this.priority,
     required this.chiefComplaint,
+    this.ewsScore,
+    this.ewsCategory,
+    this.vitals,
   });
 
   QueueEntry copyWith({
@@ -80,6 +88,9 @@ class QueueEntry {
     QueueStatus? status,
     PatientPriority? priority,
     String? chiefComplaint,
+    int? ewsScore,
+    String? ewsCategory,
+    PatientVitals? vitals,
   }) {
     return QueueEntry(
       id: id ?? this.id,
@@ -95,6 +106,10 @@ class QueueEntry {
       status: status ?? this.status,
       priority: priority ?? this.priority,
       chiefComplaint: chiefComplaint ?? this.chiefComplaint,
+      ewsScore: ewsScore ?? this.ewsScore,
+      ewsCategory: ewsCategory ?? this.ewsCategory,
+      vitals: vitals ?? this.vitals,
     );
   }
 }
+

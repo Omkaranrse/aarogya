@@ -66,5 +66,7 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Aarogya requires Face ID or Touch ID for secure clinical biometric authentication during doctor rounds.</string>
 </dict>
 </plist>

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../core/design_system/glass/glass_container.dart';
 import '../../../core/design_system/glass/glass_card.dart';
 import '../../../core/design_system/tokens/colors.dart';
@@ -19,16 +20,19 @@ class AppointmentBookingSheet extends ConsumerStatefulWidget {
   const AppointmentBookingSheet({super.key, required this.doctor});
 
   @override
-  ConsumerState<AppointmentBookingSheet> createState() => _AppointmentBookingSheetState();
+  ConsumerState<AppointmentBookingSheet> createState() =>
+      _AppointmentBookingSheetState();
 }
 
-class _AppointmentBookingSheetState extends ConsumerState<AppointmentBookingSheet> {
+class _AppointmentBookingSheetState
+    extends ConsumerState<AppointmentBookingSheet> {
   int _currentStep = 0;
   ConsultationType _selectedType = ConsultationType.inPerson;
   late DateTime _selectedDate;
   late String _selectedSlot;
   final TextEditingController _symptomsController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
+  String? _symptomsError;
   bool _isBooking = false;
   Appointment? _confirmedAppointment;
 
@@ -47,6 +51,29 @@ class _AppointmentBookingSheetState extends ConsumerState<AppointmentBookingShee
   }
 
   void _proceedToNext() {
+    if (_currentStep == 1) {
+      if (_selectedSlot.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please select an appointment time slot.'),
+            backgroundColor: AarogyaColors.critical,
+          ),
+        );
+        return;
+      }
+    } else if (_currentStep == 2) {
+      final symp = _symptomsController.text.trim();
+      if (symp.isEmpty) {
+        setState(() => _symptomsError = 'Please describe your symptoms or reason for visit.');
+        return;
+      } else if (symp.length < 5) {
+        setState(() => _symptomsError = 'Symptoms description must be at least 5 characters.');
+        return;
+      } else {
+        setState(() => _symptomsError = null);
+      }
+    }
+
     if (_currentStep < 3) {
       setState(() => _currentStep++);
     } else {
@@ -64,8 +91,12 @@ class _AppointmentBookingSheetState extends ConsumerState<AppointmentBookingShee
       date: _selectedDate,
       timeSlot: _selectedSlot,
       type: _selectedType,
-      symptoms: _symptomsController.text.trim().isNotEmpty ? _symptomsController.text.trim() : null,
-      notes: _notesController.text.trim().isNotEmpty ? _notesController.text.trim() : null,
+      symptoms: _symptomsController.text.trim().isNotEmpty
+          ? _symptomsController.text.trim()
+          : null,
+      notes: _notesController.text.trim().isNotEmpty
+          ? _notesController.text.trim()
+          : null,
     );
 
     if (mounted) {
@@ -79,34 +110,52 @@ class _AppointmentBookingSheetState extends ConsumerState<AppointmentBookingShee
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryText = isDark ? AarogyaColors.textDarkPrimary : AarogyaColors.textLightPrimary;
-    final secondaryText = isDark ? AarogyaColors.textDarkSecondary : AarogyaColors.textLightSecondary;
+    final primaryText = isDark
+        ? AarogyaColors.textDarkPrimary
+        : AarogyaColors.textLightPrimary;
+    final secondaryText = isDark
+        ? AarogyaColors.textDarkSecondary
+        : AarogyaColors.textLightSecondary;
+
+    final accentColor = isDark
+        ? AarogyaColors.primaryCyan
+        : AarogyaColors.primaryBlue;
 
     return DraggableScrollableSheet(
       initialChildSize: 0.85,
       minChildSize: 0.5,
       maxChildSize: 0.95,
+      snap: true,
       builder: (context, scrollController) {
         return GlassContainer(
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          padding: AarogyaSpacing.paddingXl,
-          backgroundColor: isDark ? AarogyaColors.darkSurface : AarogyaColors.lightSurface,
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+          backgroundColor: isDark
+              ? AarogyaColors.darkSurface
+              : AarogyaColors.lightSurface,
           child: _confirmedAppointment != null
-              ? _buildSuccessView(context, _confirmedAppointment!, isDark, primaryText, secondaryText)
+              ? _buildSuccessView(
+                  context,
+                  _confirmedAppointment!,
+                  isDark,
+                  primaryText,
+                  secondaryText,
+                  accentColor,
+                )
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Center(
                       child: Container(
-                        width: 44,
-                        height: 5,
+                        width: 40,
+                        height: 4,
                         decoration: BoxDecoration(
-                          color: Colors.grey.withOpacity(0.3),
-                          borderRadius: BorderRadius.circular(10),
+                          color: isDark ? Colors.white24 : Colors.black12,
+                          borderRadius: BorderRadius.circular(2),
                         ),
                       ),
                     ),
-                    const SizedBox(height: AarogyaSpacing.lg),
+                    const SizedBox(height: 16),
 
                     // Header with Progress indicator
                     Row(
@@ -117,11 +166,15 @@ class _AppointmentBookingSheetState extends ConsumerState<AppointmentBookingShee
                           children: [
                             Text(
                               'Book Appointment',
-                              style: AarogyaTypography.headingLarge(primaryText),
+                              style: AarogyaTypography.headingLarge(
+                                primaryText,
+                              ),
                             ),
+                            const SizedBox(height: 2),
                             Text(
                               'Step ${_currentStep + 1} of 4: ${_getStepTitle(_currentStep)}',
-                              style: AarogyaTypography.caption(AarogyaColors.primaryCyan),
+                              style: AarogyaTypography.caption(accentColor)
+                                  .copyWith(fontWeight: FontWeight.w600),
                             ),
                           ],
                         ),
@@ -134,8 +187,10 @@ class _AppointmentBookingSheetState extends ConsumerState<AppointmentBookingShee
                               height: 4,
                               decoration: BoxDecoration(
                                 color: isActive
-                                    ? AarogyaColors.primaryCyan
-                                    : (isDark ? Colors.white12 : Colors.black12),
+                                    ? accentColor
+                                    : (isDark
+                                          ? Colors.white12
+                                          : Colors.black12),
                                 borderRadius: BorderRadius.circular(2),
                               ),
                             );
@@ -143,17 +198,31 @@ class _AppointmentBookingSheetState extends ConsumerState<AppointmentBookingShee
                         ),
                       ],
                     ),
-                    const SizedBox(height: AarogyaSpacing.xl),
+                    const SizedBox(height: 18),
 
                     // Step Content
                     Expanded(
                       child: ListView(
                         controller: scrollController,
                         children: [
-                          if (_currentStep == 0) _buildStep1(isDark, primaryText, secondaryText),
-                          if (_currentStep == 1) _buildStep2(isDark, primaryText, secondaryText),
-                          if (_currentStep == 2) _buildStep3(isDark, primaryText, secondaryText),
-                          if (_currentStep == 3) _buildStep4(isDark, primaryText, secondaryText),
+                          if (_currentStep == 0)
+                            _buildStep1(
+                              isDark,
+                              primaryText,
+                              secondaryText,
+                              accentColor,
+                            ),
+                          if (_currentStep == 1)
+                            _buildStep2(
+                              isDark,
+                              primaryText,
+                              secondaryText,
+                              accentColor,
+                            ),
+                          if (_currentStep == 2)
+                            _buildStep3(isDark, primaryText, secondaryText),
+                          if (_currentStep == 3)
+                            _buildStep4(isDark, primaryText, secondaryText),
                         ],
                       ),
                     ),
@@ -172,7 +241,9 @@ class _AppointmentBookingSheetState extends ConsumerState<AppointmentBookingShee
                           ],
                           Expanded(
                             child: AarogyaButton(
-                              label: _currentStep == 3 ? 'Confirm & Book (Pay ₹${widget.doctor.consultationFee.toInt()})' : 'Continue',
+                              label: _currentStep == 3
+                                  ? 'Confirm & Book (Pay ₹${widget.doctor.consultationFee.toInt() + 50})'
+                                  : 'Continue',
                               isLoading: _isBooking,
                               onPressed: _proceedToNext,
                             ),
@@ -190,41 +261,51 @@ class _AppointmentBookingSheetState extends ConsumerState<AppointmentBookingShee
   String _getStepTitle(int step) {
     switch (step) {
       case 0:
-        return 'Consultation Mode';
+        return 'Format';
       case 1:
-        return 'Date & Time Slot';
+        return 'Date & Slot';
       case 2:
-        return 'Symptoms & Clinical Reason';
+        return 'Symptoms';
       case 3:
       default:
-        return 'Review & Confirm';
+        return 'Confirm';
     }
   }
 
-  Widget _buildStep1(bool isDark, Color primaryText, Color secondaryText) {
+  Widget _buildStep1(
+    bool isDark,
+    Color primaryText,
+    Color secondaryText,
+    Color accentColor,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Select Consultation Format', style: AarogyaTypography.title(primaryText)),
+        Text(
+          'Consultation Format',
+          style: AarogyaTypography.title(primaryText),
+        ),
         const SizedBox(height: AarogyaSpacing.md),
         _buildModeCard(
           type: ConsultationType.inPerson,
-          title: 'In-Person Hospital OPD',
-          subtitle: 'Visit ${widget.doctor.hospital} with an OPD appointment queue pass.',
+          title: 'In-Person Consultation',
+          subtitle: 'Visit clinic at ${widget.doctor.hospital}.',
           icon: Icons.local_hospital_rounded,
           isDark: isDark,
           primaryText: primaryText,
           secondaryText: secondaryText,
+          accentColor: accentColor,
         ),
         const SizedBox(height: AarogyaSpacing.md),
         _buildModeCard(
           type: ConsultationType.videoCall,
-          title: 'Futuristic Tele-Consultation',
-          subtitle: 'Encrypted HD Video Room consultation with instant digital prescription.',
+          title: 'Video Consultation',
+          subtitle: 'Live encrypted video call with digital prescription.',
           icon: Icons.video_camera_front_rounded,
           isDark: isDark,
           primaryText: primaryText,
           secondaryText: secondaryText,
+          accentColor: accentColor,
         ),
       ],
     );
@@ -238,27 +319,35 @@ class _AppointmentBookingSheetState extends ConsumerState<AppointmentBookingShee
     required bool isDark,
     required Color primaryText,
     required Color secondaryText,
+    required Color accentColor,
   }) {
     final isSelected = _selectedType == type;
 
     return GlassCard(
       onTap: () => setState(() => _selectedType = type),
-      glowColor: isSelected ? AarogyaColors.primaryCyan : null,
       customBorder: Border.all(
         color: isSelected
-            ? AarogyaColors.primaryCyan
-            : (isDark ? AarogyaColors.darkGlassBorderSubtle : AarogyaColors.lightGlassBorderSubtle),
-        width: isSelected ? 2.0 : 1.0,
+            ? accentColor
+            : (isDark
+                  ? AarogyaColors.darkGlassBorderSubtle
+                  : AarogyaColors.lightGlassBorderSubtle),
+        width: isSelected ? 1.5 : 1.0,
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: (isSelected ? AarogyaColors.primaryCyan : secondaryText).withOpacity(0.12),
+              color: (isSelected ? accentColor : secondaryText).withValues(
+                alpha: 0.12,
+              ),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: isSelected ? AarogyaColors.primaryCyan : secondaryText, size: 24),
+            child: Icon(
+              icon,
+              color: isSelected ? accentColor : secondaryText,
+              size: 22,
+            ),
           ),
           const SizedBox(width: AarogyaSpacing.md),
           Expanded(
@@ -267,51 +356,77 @@ class _AppointmentBookingSheetState extends ConsumerState<AppointmentBookingShee
               children: [
                 Text(title, style: AarogyaTypography.title(primaryText)),
                 const SizedBox(height: 2),
-                Text(subtitle, style: AarogyaTypography.bodyMedium(secondaryText)),
+                Text(
+                  subtitle,
+                  style: AarogyaTypography.bodyMedium(secondaryText),
+                ),
               ],
             ),
           ),
           if (isSelected)
-            const Icon(Icons.check_circle_rounded, color: AarogyaColors.primaryCyan, size: 22),
+            Icon(Icons.check_circle_rounded, color: accentColor, size: 22),
         ],
       ),
     );
   }
 
-  Widget _buildStep2(bool isDark, Color primaryText, Color secondaryText) {
-    final dates = List.generate(7, (i) => DateTime.now().add(Duration(days: i + 1)));
+  Widget _buildStep2(
+    bool isDark,
+    Color primaryText,
+    Color secondaryText,
+    Color accentColor,
+  ) {
+    final dates = List.generate(
+      7,
+      (i) => DateTime.now().add(Duration(days: i + 1)),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Select Appointment Date', style: AarogyaTypography.title(primaryText)),
+        Text('Appointment Date', style: AarogyaTypography.title(primaryText)),
         const SizedBox(height: AarogyaSpacing.md),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
             children: dates.map((d) {
-              final isSelected = d.day == _selectedDate.day && d.month == _selectedDate.month;
+              final isSelected =
+                  d.day == _selectedDate.day && d.month == _selectedDate.month;
               return Padding(
                 padding: const EdgeInsets.only(right: 10),
                 child: GlassCard(
                   onTap: () => setState(() => _selectedDate = d),
-                  glowColor: isSelected ? AarogyaColors.primaryCyan : null,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   customBorder: Border.all(
-                    color: isSelected ? AarogyaColors.primaryCyan : Colors.transparent,
-                    width: 1.5,
+                    color: isSelected
+                        ? accentColor
+                        : (isDark
+                              ? AarogyaColors.darkGlassBorderSubtle
+                              : AarogyaColors.lightGlassBorderSubtle),
+                    width: isSelected ? 1.5 : 1.0,
                   ),
                   child: Column(
                     children: [
                       Text(
-                        ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][d.weekday - 1],
+                        [
+                          'Mon',
+                          'Tue',
+                          'Wed',
+                          'Thu',
+                          'Fri',
+                          'Sat',
+                          'Sun',
+                        ][d.weekday - 1],
                         style: AarogyaTypography.caption(secondaryText),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         '${d.day}',
                         style: AarogyaTypography.title(primaryText).copyWith(
-                          color: isSelected ? AarogyaColors.primaryCyan : primaryText,
+                          color: isSelected ? accentColor : primaryText,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -323,7 +438,7 @@ class _AppointmentBookingSheetState extends ConsumerState<AppointmentBookingShee
           ),
         ),
         const SizedBox(height: AarogyaSpacing.xl),
-        Text('Select Time Slot', style: AarogyaTypography.title(primaryText)),
+        Text('Time Slot', style: AarogyaTypography.title(primaryText)),
         const SizedBox(height: AarogyaSpacing.md),
         Wrap(
           spacing: 10,
@@ -334,11 +449,22 @@ class _AppointmentBookingSheetState extends ConsumerState<AppointmentBookingShee
               label: Text(slot),
               selected: isSelected,
               onSelected: (_) => setState(() => _selectedSlot = slot),
-              selectedColor: AarogyaColors.primaryCyan.withOpacity(0.25),
+              selectedColor: accentColor.withValues(alpha: 0.15),
+              backgroundColor: Colors.transparent,
+              labelStyle:
+                  AarogyaTypography.caption(
+                    isSelected ? accentColor : secondaryText,
+                  ).copyWith(
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  ),
               shape: RoundedRectangleBorder(
                 borderRadius: AarogyaRadius.radiusPill,
                 side: BorderSide(
-                  color: isSelected ? AarogyaColors.primaryCyan : Colors.transparent,
+                  color: isSelected
+                      ? accentColor
+                      : (isDark
+                            ? AarogyaColors.darkGlassBorderSubtle
+                            : AarogyaColors.lightGlassBorderSubtle),
                 ),
               ),
             );
@@ -352,23 +478,29 @@ class _AppointmentBookingSheetState extends ConsumerState<AppointmentBookingShee
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Reason for Consultation', style: AarogyaTypography.title(primaryText)),
+        Text('Reason for Visit', style: AarogyaTypography.title(primaryText)),
         const SizedBox(height: AarogyaSpacing.xs),
         Text(
-          'Brief description helps Dr. ${widget.doctor.name} prepare clinical context before you arrive.',
+          'Helps Dr. ${widget.doctor.name} understand your symptoms beforehand.',
           style: AarogyaTypography.bodyMedium(secondaryText),
         ),
         const SizedBox(height: AarogyaSpacing.md),
         AarogyaTextField(
-          label: 'Primary Symptoms / Complaints',
-          hintText: 'e.g. Mild chest tightness while jogging, shortness of breath...',
+          label: 'Primary Symptoms *',
+          hintText: 'e.g. Mild chest tightness, fatigue...',
           controller: _symptomsController,
           maxLines: 3,
+          errorText: _symptomsError,
+          onChanged: (_) {
+            if (_symptomsError != null) {
+              setState(() => _symptomsError = null);
+            }
+          },
         ),
         const SizedBox(height: AarogyaSpacing.md),
         AarogyaTextField(
-          label: 'Special Notes or Past Relevant Tests',
-          hintText: 'e.g. Bringing latest ECG & Fasting Lipid Panel reports from last week.',
+          label: 'Notes / Relevant Past Tests',
+          hintText: 'e.g. Bringing latest ECG reports.',
           controller: _notesController,
           maxLines: 2,
         ),
@@ -380,22 +512,65 @@ class _AppointmentBookingSheetState extends ConsumerState<AppointmentBookingShee
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Review Appointment Summary', style: AarogyaTypography.title(primaryText)),
+        Text(
+          'Appointment Summary',
+          style: AarogyaTypography.title(primaryText),
+        ),
         const SizedBox(height: AarogyaSpacing.md),
         GlassCard(
           padding: AarogyaSpacing.paddingLg,
           child: Column(
             children: [
-              _buildReviewRow('Doctor', widget.doctor.name, primaryText, secondaryText),
-              _buildReviewRow('Specialty', widget.doctor.specialty, primaryText, secondaryText),
-              _buildReviewRow('Format', _selectedType.displayName, primaryText, secondaryText),
-              _buildReviewRow('Date', AarogyaFormatters.dateWithDay(_selectedDate), primaryText, secondaryText),
-              _buildReviewRow('Slot', _selectedSlot, primaryText, secondaryText),
-              _buildReviewRow('Hospital', widget.doctor.hospital, primaryText, secondaryText),
-              const Divider(height: 24),
-              _buildReviewRow('Consultation Fee', AarogyaFormatters.currency(widget.doctor.consultationFee), primaryText, secondaryText),
-              _buildReviewRow('Digital Record & Platform Fee', '₹50', primaryText, secondaryText),
-              const Divider(height: 24),
+              _buildReviewRow(
+                'Doctor',
+                widget.doctor.name,
+                primaryText,
+                secondaryText,
+              ),
+              _buildReviewRow(
+                'Specialty',
+                widget.doctor.specialty,
+                primaryText,
+                secondaryText,
+              ),
+              _buildReviewRow(
+                'Format',
+                _selectedType.displayName,
+                primaryText,
+                secondaryText,
+              ),
+              _buildReviewRow(
+                'Date',
+                AarogyaFormatters.dateWithDay(_selectedDate),
+                primaryText,
+                secondaryText,
+              ),
+              _buildReviewRow(
+                'Slot',
+                _selectedSlot,
+                primaryText,
+                secondaryText,
+              ),
+              _buildReviewRow(
+                'Hospital',
+                widget.doctor.hospital,
+                primaryText,
+                secondaryText,
+              ),
+              const Divider(height: 20),
+              _buildReviewRow(
+                'Consultation Fee',
+                AarogyaFormatters.currency(widget.doctor.consultationFee),
+                primaryText,
+                secondaryText,
+              ),
+              _buildReviewRow(
+                'Platform Fee',
+                '₹50',
+                primaryText,
+                secondaryText,
+              ),
+              const Divider(height: 20),
               _buildReviewRow(
                 'Total Payable',
                 AarogyaFormatters.currency(widget.doctor.consultationFee + 50),
@@ -410,7 +585,13 @@ class _AppointmentBookingSheetState extends ConsumerState<AppointmentBookingShee
     );
   }
 
-  Widget _buildReviewRow(String label, String value, Color valueColor, Color labelColor, {bool isBold = false}) {
+  Widget _buildReviewRow(
+    String label,
+    String value,
+    Color valueColor,
+    Color labelColor, {
+    bool isBold = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -419,9 +600,9 @@ class _AppointmentBookingSheetState extends ConsumerState<AppointmentBookingShee
           Text(label, style: AarogyaTypography.bodyMedium(labelColor)),
           Text(
             value,
-            style: AarogyaTypography.bodyMedium(valueColor).copyWith(
-              fontWeight: isBold ? FontWeight.w800 : FontWeight.w600,
-            ),
+            style: AarogyaTypography.bodyMedium(
+              valueColor,
+            ).copyWith(fontWeight: isBold ? FontWeight.w800 : FontWeight.w600),
           ),
         ],
       ),
@@ -434,6 +615,7 @@ class _AppointmentBookingSheetState extends ConsumerState<AppointmentBookingShee
     bool isDark,
     Color primaryText,
     Color secondaryText,
+    Color accentColor,
   ) {
     return Center(
       child: Padding(
@@ -442,16 +624,25 @@ class _AppointmentBookingSheetState extends ConsumerState<AppointmentBookingShee
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color: AarogyaColors.success.withOpacity(0.15),
+                color: AarogyaColors.success.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
-                border: Border.all(color: AarogyaColors.success.withOpacity(0.4)),
+                border: Border.all(
+                  color: AarogyaColors.success.withValues(alpha: 0.3),
+                ),
               ),
-              child: const Icon(Icons.check_circle_rounded, size: 54, color: AarogyaColors.success),
+              child: const Icon(
+                Icons.check_circle_rounded,
+                size: 48,
+                color: AarogyaColors.success,
+              ),
             ),
             const SizedBox(height: AarogyaSpacing.lg),
-            Text('Appointment Confirmed!', style: AarogyaTypography.headingLarge(primaryText)),
+            Text(
+              'Appointment Confirmed',
+              style: AarogyaTypography.headingLarge(primaryText),
+            ),
             const SizedBox(height: AarogyaSpacing.xs),
             Text(
               'Your consultation with ${apt.doctorName} is confirmed for ${AarogyaFormatters.dateWithDay(apt.dateTime)} at ${apt.timeSlot}.',
@@ -460,20 +651,21 @@ class _AppointmentBookingSheetState extends ConsumerState<AppointmentBookingShee
             ),
             const SizedBox(height: AarogyaSpacing.lg),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               decoration: BoxDecoration(
-                color: AarogyaColors.primaryCyan.withOpacity(0.12),
+                color: accentColor.withValues(alpha: 0.1),
                 borderRadius: AarogyaRadius.radiusPill,
-                border: Border.all(color: AarogyaColors.primaryCyan.withOpacity(0.3)),
+                border: Border.all(color: accentColor.withValues(alpha: 0.25)),
               ),
               child: Text(
-                'OPD Token: #${apt.tokenNumber}',
-                style: AarogyaTypography.headingMedium(AarogyaColors.primaryCyan),
+                'OPD Token #${apt.tokenNumber}',
+                style: AarogyaTypography.title(accentColor)
+                    .copyWith(fontWeight: FontWeight.w700),
               ),
             ),
             const SizedBox(height: AarogyaSpacing.xxl),
             AarogyaButton(
-              label: 'Done & Return to Dashboard',
+              label: 'Done',
               onPressed: () => Navigator.pop(context),
             ),
           ],

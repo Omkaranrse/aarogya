@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/design_system/glass/glass_card.dart';
+
 import '../../core/design_system/tokens/colors.dart';
 import '../../core/design_system/tokens/radius.dart';
-import '../../core/design_system/tokens/spacing.dart';
 import '../../core/design_system/tokens/typography.dart';
-import '../../core/design_system/components/aarogya_badge.dart';
-import '../../core/design_system/components/aarogya_button.dart';
 import '../../core/design_system/components/aarogya_empty_state.dart';
+import '../../core/design_system/components/contextual_header.dart';
+import '../../core/design_system/components/timeline_entry_card.dart';
+import '../../core/theme/aarogya_theme_tokens.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/responsive.dart';
 import '../../shared/domain/models/medical_record.dart';
@@ -17,7 +17,8 @@ class MedicalRecordsScreen extends ConsumerStatefulWidget {
   const MedicalRecordsScreen({super.key});
 
   @override
-  ConsumerState<MedicalRecordsScreen> createState() => _MedicalRecordsScreenState();
+  ConsumerState<MedicalRecordsScreen> createState() =>
+      _MedicalRecordsScreenState();
 }
 
 class _MedicalRecordsScreenState extends ConsumerState<MedicalRecordsScreen> {
@@ -28,8 +29,12 @@ class _MedicalRecordsScreenState extends ConsumerState<MedicalRecordsScreen> {
     final records = ref.watch(medicalRecordsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final primaryText = isDark ? AarogyaColors.textDarkPrimary : AarogyaColors.textLightPrimary;
-    final secondaryText = isDark ? AarogyaColors.textDarkSecondary : AarogyaColors.textLightSecondary;
+    final primaryText = isDark
+        ? AarogyaColors.textDarkPrimary
+        : AarogyaColors.textLightPrimary;
+    final secondaryText = isDark
+        ? AarogyaColors.textDarkSecondary
+        : AarogyaColors.textLightSecondary;
 
     final filtered = _selectedFilter == null
         ? records
@@ -38,31 +43,18 @@ class _MedicalRecordsScreenState extends ConsumerState<MedicalRecordsScreen> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Padding(
-        padding: EdgeInsets.all(Responsive.isMobile(context) ? 12 : AarogyaSpacing.xxl),
+        padding: EdgeInsets.symmetric(
+          horizontal: Responsive.isMobile(context) ? 12 : 24,
+          vertical: Responsive.isMobile(context) ? 12 : 16,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Health Timeline & EHR Records', style: AarogyaTypography.headingLarge(primaryText)),
-                      Text(
-                        'Unified chronological history of consultations, diagnostic panels, and prescriptions',
-                        style: AarogyaTypography.bodyMedium(secondaryText),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                AarogyaBadge(
-                  label: '${records.length} Total Records',
-                  variant: AarogyaBadgeVariant.cyan,
-                ),
-              ],
+            ContextualHeader(
+              title: 'Health Timeline & EHR Records',
+              subtitle: 'Unified chronological history of consultations & findings',
+              statusLabel: '${records.length} Records',
+              statusColor: context.aarogyaColors.primary,
             ),
             const SizedBox(height: 8),
 
@@ -99,7 +91,14 @@ class _MedicalRecordsScreenState extends ConsumerState<MedicalRecordsScreen> {
                       itemBuilder: (context, index) {
                         final record = filtered[index];
                         final isLast = index == filtered.length - 1;
-                        return _buildTimelineItem(context, record, isLast, isDark, primaryText, secondaryText);
+                        return _buildTimelineItem(
+                          context,
+                          record,
+                          isLast,
+                          isDark,
+                          primaryText,
+                          secondaryText,
+                        );
                       },
                     ),
             ),
@@ -109,25 +108,39 @@ class _MedicalRecordsScreenState extends ConsumerState<MedicalRecordsScreen> {
     );
   }
 
-  Widget _buildFilterChip(String label, bool isSelected, VoidCallback onTap, bool isDark) {
+  Widget _buildFilterChip(
+    String label,
+    bool isSelected,
+    VoidCallback onTap,
+    bool isDark,
+  ) {
+    final accentColor = isDark
+        ? AarogyaColors.primaryCyan
+        : AarogyaColors.primaryBlue;
+
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: ChoiceChip(
         label: Text(label),
         selected: isSelected,
         onSelected: (_) => onTap(),
-        selectedColor: isDark ? AarogyaColors.primaryCyan.withOpacity(0.2) : AarogyaColors.primaryBlue.withOpacity(0.15),
+        selectedColor: accentColor.withValues(alpha: 0.15),
+        backgroundColor: Colors.transparent,
         labelStyle: AarogyaTypography.caption(
           isSelected
-              ? (isDark ? AarogyaColors.primaryCyan : AarogyaColors.primaryBlue)
-              : (isDark ? AarogyaColors.textDarkSecondary : AarogyaColors.textLightSecondary),
+              ? accentColor
+              : (isDark
+                    ? AarogyaColors.textDarkSecondary
+                    : AarogyaColors.textLightSecondary),
         ).copyWith(fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500),
         shape: RoundedRectangleBorder(
-          borderRadius: AarogyaRadius.radiusPill,
+          borderRadius: BorderRadius.circular(20),
           side: BorderSide(
             color: isSelected
-                ? (isDark ? AarogyaColors.primaryCyan : AarogyaColors.primaryBlue)
-                : Colors.transparent,
+                ? accentColor
+                : (isDark
+                      ? AarogyaColors.darkGlassBorderSubtle
+                      : AarogyaColors.lightGlassBorderSubtle),
           ),
         ),
       ),
@@ -142,126 +155,99 @@ class _MedicalRecordsScreenState extends ConsumerState<MedicalRecordsScreen> {
     Color primaryText,
     Color secondaryText,
   ) {
+    final colors = context.aarogyaColors;
+    final typography = context.aarogyaTypography;
+
     IconData icon;
     Color accentColor;
 
     switch (record.type) {
       case MedicalRecordType.consultation:
         icon = Icons.medical_services_rounded;
-        accentColor = AarogyaColors.primaryCyan;
+        accentColor = colors.primary;
         break;
       case MedicalRecordType.labReport:
         icon = Icons.biotech_rounded;
-        accentColor = AarogyaColors.primaryBlue;
+        accentColor = colors.accentAction;
         break;
       case MedicalRecordType.prescription:
         icon = Icons.medication_rounded;
-        accentColor = AarogyaColors.accentPurple;
+        accentColor = const Color(0xFF8B5CF6);
         break;
       case MedicalRecordType.radiology:
         icon = Icons.camera_enhance_rounded;
-        accentColor = AarogyaColors.warning;
+        accentColor = colors.clinicalWarning;
         break;
       case MedicalRecordType.dischargeSummary:
-      default:
         icon = Icons.assignment_turned_in_rounded;
-        accentColor = AarogyaColors.success;
+        accentColor = colors.clinicalStable;
     }
 
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+    return TimelineEntryCard(
+      icon: icon,
+      iconColor: accentColor,
+      isLast: isLast,
+      title: record.title,
+      subtitle: '${record.doctorName} • ${record.department}',
+      timestamp: AarogyaFormatters.date(record.date),
+      statusBadge: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: accentColor.withValues(alpha: 0.12),
+          borderRadius: AarogyaRadius.radius4,
+          border: Border.all(
+            color: accentColor.withValues(alpha: 0.28),
+            width: 0.8,
+          ),
+        ),
+        child: Text(
+          record.type.displayName,
+          style: typography.caption.copyWith(
+            color: accentColor,
+            fontWeight: FontWeight.w700,
+            fontSize: 9.5,
+          ),
+        ),
+      ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Timeline indicator line + dot
-          SizedBox(
-            width: 40,
-            child: Column(
-              children: [
-                Container(
-                  width: 32,
-                  height: 32,
+          Text(
+            record.summary,
+            style: typography.body.copyWith(
+              color: colors.neutrals.gray700,
+            ),
+          ),
+          if (record.tags.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: record.tags.map((tag) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
-                    color: accentColor.withOpacity(0.2),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: accentColor, width: 2),
-                  ),
-                  child: Icon(icon, size: 16, color: accentColor),
-                ),
-                if (!isLast)
-                  Expanded(
-                    child: Container(
-                      width: 2,
-                      color: (isDark ? AarogyaColors.darkGlassBorderSubtle : AarogyaColors.lightGlassBorderSubtle),
+                    color: colors.surfaceActionable,
+                    borderRadius: AarogyaRadius.radius4,
+                    border: Border.all(
+                      color: colors.borderHairline,
+                      width: 0.8,
                     ),
                   ),
-              ],
-            ),
-          ),
-          const SizedBox(width: AarogyaSpacing.md),
-
-          // Record Card
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: AarogyaSpacing.lg),
-              child: GlassCard(
-                glowColor: accentColor,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            record.title,
-                            style: AarogyaTypography.title(primaryText).copyWith(fontWeight: FontWeight.w700),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          AarogyaFormatters.date(record.date),
-                          style: AarogyaTypography.caption(secondaryText),
-                        ),
-                      ],
+                  child: Text(
+                    '#$tag',
+                    style: typography.caption.copyWith(
+                      color: colors.neutrals.gray500,
+                      fontSize: 10,
                     ),
-                    const SizedBox(height: 6),
-                    Wrap(
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 8,
-                      runSpacing: 4,
-                      children: [
-                        AarogyaBadge(label: record.type.displayName, variant: AarogyaBadgeVariant.info),
-                        Text(
-                          '${record.doctorName} • Department of ${record.department}',
-                          style: AarogyaTypography.caption(AarogyaColors.primaryCyan),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(record.summary, style: AarogyaTypography.bodyMedium(secondaryText)),
-                    if (record.tags.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 4,
-                        children: record.tags.map((tag) {
-                          return Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
-                              borderRadius: AarogyaRadius.radiusSm,
-                            ),
-                            child: Text('#$tag', style: AarogyaTypography.caption(secondaryText)),
-                          );
-                        }).toList(),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
+                  ),
+                );
+              }).toList(),
             ),
-          ),
+          ],
         ],
       ),
     );

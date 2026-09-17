@@ -31,7 +31,8 @@ enum ConsultationType {
   inPerson,
   videoCall;
 
-  String get displayName => this == ConsultationType.inPerson ? 'In-Person OPD' : 'Tele-Consultation';
+  String get displayName =>
+      this == ConsultationType.inPerson ? 'In-Person OPD' : 'Tele-Consultation';
 }
 
 class Appointment {
