@@ -15,6 +15,7 @@
   <a href="#compliance"><img src="https://img.shields.io/badge/Security-DPDP_Act_2023-critical?style=for-the-badge" alt="DPDP Act"></a>
   <a href="#deployment"><img src="https://img.shields.io/badge/Backend-Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" alt="Firebase"></a>
   <a href="#platforms"><img src="https://img.shields.io/badge/Platform-Web_•_iOS_•_Android_•_macOS-2563EB?style=for-the-badge" alt="Platforms"></a>
+  <a href="https://omkar-anarse.vercel.app"><img src="https://img.shields.io/badge/Engineered%20By-Omkar%20Anarse-00D8F6?style=for-the-badge&logo=vercel&logoColor=white" alt="Portfolio"></a>
 </p>
 
 ---
@@ -22,6 +23,7 @@
 ## 📑 Table of Contents
 
 - [Executive Overview](#-executive-overview)
+- [Author & Creator](#-author--creator)
 - [System Architecture](#-system-architecture)
 - [Core Clinical Workspaces](#-core-clinical-workspaces)
 - [Clinical Data Integrity & Security Standards](#-clinical-data-integrity--security-standards)
@@ -44,6 +46,28 @@ Built from the ground up to solve real-world healthcare delivery friction, Aarog
 - **Diagnostic Reference Engine**: Continuous custom-painted reference range gauges with automated abnormal value caret flags.
 - **ABDM / ABHA Interoperability**: Longitudinal health records, FHIR-aligned data structures, and digital prescriptions.
 - **Zero-Latency Universal Omnibar**: `Cmd+K` global command palette for medical records, doctors, patients, diagnostic labs, and role routing.
+
+---
+
+## 👨‍💻 Author & Creator
+
+<p align="center">
+  <a href="https://omkar-anarse.vercel.app" target="_blank">
+    <img src="assets/omkar_avatar.png" alt="Omkar Anarse" width="110" height="110" style="border-radius: 50%;" />
+  </a>
+</p>
+
+<p align="center">
+  <strong>Omkar Anarse</strong><br>
+  <em>AI & Full Stack Engineer</em><br>
+  🌐 <strong>Portfolio</strong>: <a href="https://omkar-anarse.vercel.app">https://omkar-anarse.vercel.app</a>
+</p>
+
+Aarogya includes a built-in interactive **"Produced by Omkar"** floating widget ([`OmkarPortfolioBadge`](lib/core/design_system/components/omkar_portfolio_badge.dart)) positioned in the bottom-right corner:
+- **Pulsing Halo Avatar**: 3D cartoon avatar with an ambient breathing cyan/indigo radial glow and live online indicator.
+- **Glassmorphic Brand Pill**: Modern capsule badge displaying `PRODUCED BY Omkar Anarse` with sparkle icon.
+- **Speech Bubble Popover**: Responsive pop message (*"Hey! I'm Omkar Anarse 👋 AI & Full Stack Engineer. Click me to explore my portfolio!"*) with a one-tap direct CTA button.
+- **Universal Floating Shell**: Globally mounted via `MaterialApp.builder` to float across all screens and consultation rooms.
 
 ---
 
@@ -123,6 +147,8 @@ The UI leverages a bespoke medical design system engineered for high-stress clin
   - All numerical telemetry, vitals, timecodes, and billing amounts use monospaced numeric glyphs to eliminate visual layout jitter.
 - **Dynamic Text Resilience**:
   - All critical cards and KPI metrics are resilient to dynamic OS font scaling up to **2.0x**.
+- **Interactive Portfolio Overlay (`OmkarPortfolioBadge`)**:
+  - Seamless floating badge featuring Omkar Anarse's 3D avatar, ambient breathing glow, dismissable speech bubble popover, and external portfolio redirection.
 
 ---
 
@@ -136,7 +162,7 @@ lib/
 ├── core/
 │   ├── auth/                 # AuthService, Firebase Auth, Session handling
 │   ├── clinical/             # ReferenceRangeService, diagnostic engines
-│   ├── design_system/        # Reusable design tokens, buttons, cards, skeletons
+│   ├── design_system/        # Reusable design tokens, buttons, cards, skeletons, OmkarPortfolioBadge
 │   └── utils/                # Formatters, Currency (paise), Date utilities
 ├── features/
 │   ├── auth/                 # Role-based onboarding, demo login & OTP verification

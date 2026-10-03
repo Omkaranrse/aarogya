@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 
 import 'app/shell/adaptive_shell.dart';
 import 'app/theme/aarogya_theme.dart';
+import 'core/design_system/components/omkar_portfolio_badge.dart';
 import 'features/auth/auth_screen.dart';
 import 'firebase_options.dart';
 import 'shared/state/aarogya_providers.dart';
@@ -33,6 +34,14 @@ class AarogyaApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: AarogyaTheme.lightTheme,
       themeMode: ThemeMode.light,
+      builder: (context, child) {
+        return Stack(
+          children: [
+            ?child,
+            const OmkarPortfolioBadge(),
+          ],
+        );
+      },
       home: isAuthenticated ? const AdaptiveShell() : const AuthScreen(),
     );
   }
