@@ -415,7 +415,7 @@ class AdaptiveShell extends ConsumerWidget {
                               Expanded(
                                 child: Text(
                                   r.displayName,
-                                  style: AarogyaTypography.body(
+                                  style: AarogyaTypography.bodyMedium(
                                     isDark ? AarogyaColors.textDarkPrimary : AarogyaColors.textLightPrimary,
                                   ).copyWith(
                                     fontSize: 13,
