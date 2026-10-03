@@ -518,6 +518,7 @@ class _AarogyaOmnibarState extends ConsumerState<AarogyaOmnibar> {
         iconColor: AarogyaColors.primaryCyan,
         category: OmnibarCategory.actions,
         onSelect: () {
+          ref.read(authServiceProvider).switchRole(UserRole.doctor);
           repo.switchRole(UserRole.doctor);
           ref.read(selectedTabIndexProvider.notifier).state = 0;
         },
@@ -530,6 +531,7 @@ class _AarogyaOmnibarState extends ConsumerState<AarogyaOmnibar> {
         iconColor: AarogyaColors.warning,
         category: OmnibarCategory.actions,
         onSelect: () {
+          ref.read(authServiceProvider).switchRole(UserRole.admin);
           repo.switchRole(UserRole.admin);
           ref.read(selectedTabIndexProvider.notifier).state = 0;
         },
@@ -543,6 +545,7 @@ class _AarogyaOmnibarState extends ConsumerState<AarogyaOmnibar> {
         iconColor: AarogyaColors.success,
         category: OmnibarCategory.actions,
         onSelect: () {
+          ref.read(authServiceProvider).switchRole(UserRole.patient);
           repo.switchRole(UserRole.patient);
           ref.read(selectedTabIndexProvider.notifier).state = 0;
         },
@@ -555,6 +558,7 @@ class _AarogyaOmnibarState extends ConsumerState<AarogyaOmnibar> {
         iconColor: AarogyaColors.primaryCyan,
         category: OmnibarCategory.actions,
         onSelect: () {
+          ref.read(authServiceProvider).switchRole(UserRole.patient);
           repo.switchRole(UserRole.patient);
           ref.read(selectedTabIndexProvider.notifier).state = 4; // Labs
         },
@@ -567,6 +571,7 @@ class _AarogyaOmnibarState extends ConsumerState<AarogyaOmnibar> {
         iconColor: AarogyaColors.success,
         category: OmnibarCategory.actions,
         onSelect: () {
+          ref.read(authServiceProvider).switchRole(UserRole.patient);
           repo.switchRole(UserRole.patient);
           ref.read(selectedTabIndexProvider.notifier).state = 6; // Billing
         },
@@ -625,6 +630,7 @@ class _AarogyaOmnibarState extends ConsumerState<AarogyaOmnibar> {
             iconColor: AarogyaColors.accentPurple,
             category: OmnibarCategory.patients,
             onSelect: () {
+              ref.read(authServiceProvider).switchRole(UserRole.doctor);
               repo.switchRole(UserRole.doctor);
               ref.read(selectedTabIndexProvider.notifier).state =
                   2; // Clinical Workspace
@@ -653,6 +659,7 @@ class _AarogyaOmnibarState extends ConsumerState<AarogyaOmnibar> {
                 : AarogyaColors.primaryCyan,
             category: OmnibarCategory.tests,
             onSelect: () {
+              ref.read(authServiceProvider).switchRole(UserRole.patient);
               repo.switchRole(UserRole.patient);
               ref.read(selectedTabIndexProvider.notifier).state = 4; // Labs
             },

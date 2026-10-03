@@ -447,6 +447,11 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Switch active role during session (updates active role, session user & notifies listeners)
+  void switchRole(UserRole role) {
+    signInWithDemoRole(role);
+  }
+
   /// Sign Out
   Future<void> signOut() async {
     _isDemoActive = false;

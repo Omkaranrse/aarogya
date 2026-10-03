@@ -358,58 +358,130 @@ class AdaptiveShell extends ConsumerWidget {
 
               const Spacer(),
 
-              // Role Switcher Dropdown — DEV ONLY (hidden in release builds)
+              // Role Switcher Menu — DEV ONLY (hidden in release builds)
               if (kDebugMode) ...[
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 12, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0x331E293B) : const Color(0x1F0284C7),
-                    borderRadius: AarogyaRadius.radiusPill,
-                    border: Border.all(
-                      color: AarogyaColors.primaryCyan.withValues(alpha: 0.3),
-                    ),
+                Theme(
+                  data: Theme.of(context).copyWith(
+                    hoverColor: Colors.transparent,
+                    splashColor: Colors.transparent,
+                    highlightColor: Colors.transparent,
                   ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<UserRole>(
-                      value: role,
-                      isDense: true,
-                      icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: AarogyaColors.primaryCyan),
-                      dropdownColor: isDark ? AarogyaColors.darkSurface : AarogyaColors.lightSurface,
+                  child: PopupMenuButton<UserRole>(
+                    tooltip: 'Switch Role (Dev)',
+                    offset: const Offset(0, 36),
+                    position: PopupMenuPosition.under,
+                    color: isDark ? AarogyaColors.darkSurface : AarogyaColors.lightSurface,
+                    elevation: 8,
+                    shadowColor: Colors.black.withValues(alpha: 0.3),
+                    shape: RoundedRectangleBorder(
                       borderRadius: AarogyaRadius.radiusMd,
-                      items: UserRole.values.take(3).map((r) {
-                        return DropdownMenuItem<UserRole>(
+                      side: BorderSide(
+                        color: isDark ? AarogyaColors.darkGlassBorderSubtle : AarogyaColors.lightGlassBorderSubtle,
+                      ),
+                    ),
+                    onSelected: (newRole) {
+                      ref.read(authServiceProvider).switchRole(newRole);
+                      ref.read(repositoryProvider).switchRole(newRole);
+                      ref.read(selectedTabIndexProvider.notifier).state = 0;
+                    },
+                    itemBuilder: (context) {
+                      return UserRole.values.take(3).map((r) {
+                        final isCurrent = r == role;
+                        return PopupMenuItem<UserRole>(
                           value: r,
+                          height: 44,
                           child: Row(
-                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
-                                r == UserRole.patient
-                                    ? Icons.person_rounded
-                                    : r == UserRole.doctor
-                                        ? Icons.medical_services_rounded
-                                        : Icons.admin_panel_settings_rounded,
-                                size: 14,
-                                color: AarogyaColors.primaryCyan,
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: (isCurrent
+                                          ? AarogyaColors.primaryCyan
+                                          : AarogyaColors.primaryCyan.withValues(alpha: 0.15))
+                                      .withValues(alpha: isCurrent ? 0.2 : 0.1),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Icon(
+                                  r == UserRole.patient
+                                  ? Icons.person_rounded
+                                  : r == UserRole.doctor
+                                      ? Icons.medical_services_rounded
+                                      : Icons.admin_panel_settings_rounded,
+                                  size: 15,
+                                  color: AarogyaColors.primaryCyan,
+                                ),
                               ),
-                              const SizedBox(width: 6),
-                              Text(
-                                isMobile
-                                    ? (r == UserRole.patient ? 'Patient' : (r == UserRole.doctor ? 'Doctor' : 'Admin'))
-                                    : r.displayName,
-                                style: AarogyaTypography.caption(
-                                  isDark ? AarogyaColors.textDarkPrimary : AarogyaColors.textLightPrimary,
-                                ).copyWith(fontWeight: FontWeight.w700),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  r.displayName,
+                                  style: AarogyaTypography.body(
+                                    isDark ? AarogyaColors.textDarkPrimary : AarogyaColors.textLightPrimary,
+                                  ).copyWith(
+                                    fontSize: 13,
+                                    fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
+                                    color: isCurrent
+                                        ? AarogyaColors.primaryCyan
+                                        : (isDark
+                                            ? AarogyaColors.textDarkPrimary
+                                            : AarogyaColors.textLightPrimary),
+                                  ),
+                                ),
                               ),
+                              if (isCurrent)
+                                const Icon(
+                                  Icons.check_rounded,
+                                  size: 16,
+                                  color: AarogyaColors.primaryCyan,
+                                ),
                             ],
                           ),
                         );
-                      }).toList(),
-                      onChanged: (newRole) {
-                        if (newRole != null) {
-                          ref.read(repositoryProvider).switchRole(newRole);
-                          ref.read(selectedTabIndexProvider.notifier).state = 0;
-                        }
-                      },
+                      }).toList();
+                    },
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isMobile ? 8 : 12,
+                        vertical: isMobile ? 4 : 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0x331E293B) : const Color(0x1F0284C7),
+                        borderRadius: AarogyaRadius.radiusPill,
+                        border: Border.all(
+                          color: AarogyaColors.primaryCyan.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            role == UserRole.patient
+                                ? Icons.person_rounded
+                                : role == UserRole.doctor
+                                    ? Icons.medical_services_rounded
+                                    : Icons.admin_panel_settings_rounded,
+                            size: 14,
+                            color: AarogyaColors.primaryCyan,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            isMobile
+                                ? (role == UserRole.patient
+                                    ? 'Patient'
+                                    : (role == UserRole.doctor ? 'Doctor' : 'Admin'))
+                                : role.displayName,
+                            style: AarogyaTypography.caption(
+                              isDark ? AarogyaColors.textDarkPrimary : AarogyaColors.textLightPrimary,
+                            ).copyWith(fontWeight: FontWeight.w700),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            size: 16,
+                            color: AarogyaColors.primaryCyan,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
